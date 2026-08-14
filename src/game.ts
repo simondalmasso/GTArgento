@@ -378,6 +378,9 @@ buildBaires();
 const moria = createMoria(); scene.add(moria);
 let basePreview: THREE.Group | null = null;
 let baseReady = false;
+let baseBones: string[] = [];
+let baseMeshes: string[] = [];
+let baseAnimations: string[] = [];
 if (BASE_PREVIEW) {
   const previewLoader = new GLTFLoader();
   previewLoader.setMeshoptDecoder(MeshoptDecoder);
@@ -394,8 +397,11 @@ if (BASE_PREVIEW) {
     const min = box.min;
     root.position.set(-center.x, -min.y, -center.z);
     root.position.add(playerPos);
+    baseBones = []; baseMeshes = []; baseAnimations = gltf.animations.map(a => a.name);
     root.traverse(o => {
+      if (o instanceof THREE.Bone) baseBones.push(o.name);
       if (o instanceof THREE.Mesh || o instanceof THREE.SkinnedMesh) {
+        baseMeshes.push(o.name);
         o.castShadow = false;
         o.receiveShadow = true;
       }
@@ -627,7 +633,7 @@ requestAnimationFrame(frame);
 
 window.__QS_TEST__ = {
   start: startGame,
-  state: () => ({ started, ended, result: resultState, entity, qTimer, qUses, qAffected, vehicleMode, x: worldPos().x, z: worldPos().z, fpsAvg, fpsMedian, fpsP5, quality: resolutionScale, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, baseReady }),
+  state: () => ({ started, ended, result: resultState, entity, qTimer, qUses, qAffected, vehicleMode, x: worldPos().x, z: worldPos().z, fpsAvg, fpsMedian, fpsP5, quality: resolutionScale, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, baseReady, baseBones, baseMeshes, baseAnimations }),
   teleport: (x, z) => { if (vehicleMode) taxi.position.set(x, 0, z); else { playerPos.set(x, 0, z); moria.position.copy(playerPos); playerBody.setNextKinematicTranslation({ x, y: 1.2, z }); } },
   nearTaxi: () => { vehicleMode = false; moria.visible = true; playerPos.set(taxi.position.x + 2.4, 0, taxi.position.z); moria.position.copy(playerPos); },
   destination: () => { if (vehicleMode) taxi.position.set(destination.x, 0, destination.z); else { playerPos.copy(destination); moria.position.copy(playerPos); } },
