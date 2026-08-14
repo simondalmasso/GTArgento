@@ -20,11 +20,20 @@ test('records objective active-gameplay performance', async ({ page }, testInfo)
   await page.locator('#startBtn').click();
   await expect(page.locator('#hud')).toBeVisible();
 
-  // Keep the scene active while measuring. Mobile uses the required 3-minute mission-loop window.
-  await page.keyboard.down('w');
-  await page.waitForTimeout(1500);
-  await page.keyboard.up('w');
-  await page.waitForTimeout(mobile ? 180_000 : 60_000);
+  // Keep the entire window as active gameplay. Mobile uses the required 3-minute mission-loop window.
+  const duration = mobile ? 180_000 : 60_000;
+  const deadline = Date.now() + duration;
+  let direction = 'w';
+  while (Date.now() < deadline) {
+    const stateNow = await page.evaluate(() => window.__QS_TEST__.state());
+    if (stateNow.ended) await page.evaluate(() => window.__QS_TEST__.start());
+    await page.evaluate(() => window.__QS_TEST__.q());
+    await page.keyboard.down(direction);
+    await page.waitForTimeout(700);
+    await page.keyboard.up(direction);
+    direction = direction === 'w' ? 'a' : direction === 'a' ? 'd' : 'w';
+    await page.waitForTimeout(Math.min(4200, Math.max(0, deadline - Date.now())));
+  }
 
   const state = await page.evaluate(() => window.__QS_TEST__.state());
   console.log(`PERF_RESULT ${testInfo.project.name} ${JSON.stringify(state)}`);

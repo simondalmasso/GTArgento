@@ -4,6 +4,12 @@ const remote = (globalThis as typeof globalThis & { process?: { env?: Record<str
 const chromiumArgs = [
   '--disable-dev-shm-usage',
   '--disable-gpu-watchdog',
+  '--disable-frame-rate-limit',
+  '--disable-gpu-vsync',
+  '--ignore-gpu-blocklist',
+  '--disable-background-timer-throttling',
+  '--disable-renderer-backgrounding',
+  '--disable-backgrounding-occluded-windows',
 ];
 
 export default defineConfig({

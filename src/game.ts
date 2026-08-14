@@ -84,6 +84,12 @@ renderer.toneMapping = THREE.NoToneMapping;
 renderer.toneMappingExposure = 1;
 renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const gl = renderer.getContext();
+const debugRendererInfo = gl.getExtension('WEBGL_debug_renderer_info');
+const gpuVendor = String(gl.getParameter(debugRendererInfo ? debugRendererInfo.UNMASKED_VENDOR_WEBGL : gl.VENDOR));
+const gpuRenderer = String(gl.getParameter(debugRendererInfo ? debugRendererInfo.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+console.info('QS_WEBGL_RENDERER', JSON.stringify({ gpuVendor, gpuRenderer }));
+
 
 
 const key = new THREE.DirectionalLight(0xffddec, 2.4);
@@ -432,14 +438,14 @@ function styleMoriaRig(root: THREE.Group) {
   belt.rotation.x = Math.PI / 2; belt.position.y = 1.08; root.add(belt);
 
   // Fur coat/sleeves: many tufts in ONE instanced draw call, slimmer than the old shoulder blob.
-  const furGeo = new THREE.CapsuleGeometry(0.075, 0.27, 3, 6);
+  const furGeo = new THREE.CapsuleGeometry(0.060, 0.16, 3, 6);
   const fur = new THREE.InstancedMesh(furGeo, flat(0xff62b4), 12);
   const fd = new THREE.Object3D();
   const coat = [
-    [-.34,1.31,0,.85,1.1,-.25],[-.22,1.38,.01,.9,1.0,-.12],[-.08,1.41,.02,.9,.9,-.04],
-    [.08,1.41,.02,.9,.9,.04],[.22,1.38,.01,.9,1.0,.12],[.34,1.31,0,.85,1.1,.25],
-    [-.43,1.20,.01,.82,1.45,-.30],[-.48,1.02,.01,.78,1.35,-.18],[-.48,.84,.02,.70,1.20,-.08],
-    [.43,1.20,.01,.82,1.45,.30],[.48,1.02,.01,.78,1.35,.18],[.48,.84,.02,.70,1.20,.08]
+    [-.34,1.31,0,.82,.78,-.25],[-.22,1.38,.01,.88,.72,-.12],[-.08,1.41,.02,.88,.68,-.04],
+    [.08,1.41,.02,.88,.68,.04],[.22,1.38,.01,.88,.72,.12],[.34,1.31,0,.82,.78,.25],
+    [-.40,1.19,.01,.76,.82,-.30],[-.43,1.06,.01,.72,.88,-.18],[-.43,.92,.02,.66,.82,-.08],
+    [.40,1.19,.01,.76,.82,.30],[.43,1.06,.01,.72,.88,.18],[.43,.92,.02,.66,.82,.08]
   ] as const;
   coat.forEach(([x,y,z,sx,sy,rz],i)=>{ fd.position.set(x,y,z); fd.scale.set(sx,sy,.85); fd.rotation.set(0,0,rz); fd.updateMatrix(); fur.setMatrixAt(i,fd.matrix); });
   fur.instanceMatrix.needsUpdate=true; root.add(fur);
@@ -448,20 +454,41 @@ function styleMoriaRig(root: THREE.Group) {
   if (headBone) {
     // UV-painted original caricature on actual 3D geometry: high brows, smoky eyes,
     // long narrow nose, high cheekbones, fuchsia lips and beauty mark.
-    const faceMat = new THREE.MeshBasicMaterial({ map: makeMoriaFaceTexture(), color: 0xffffff, toneMapped:false });
-    const face = new THREE.Mesh(new THREE.SphereGeometry(0.205, 20, 16), faceMat);
-    face.scale.set(.80,1.18,.78); face.rotation.y=Math.PI/2; face.position.set(0,.035,-.018); headBone.add(face);
+    const face = new THREE.Mesh(new THREE.SphereGeometry(0.205, 22, 18), flat(0xe3a092));
+    face.scale.set(.80,1.18,.78); face.position.set(0,.035,-.018); headBone.add(face);
 
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218, 16, 10, 0, Math.PI*2, 0, Math.PI*.61), flat(0x050407));
-    cap.scale.set(.94,1.08,.92); cap.position.set(0,.09,.02); headBone.add(cap);
+    // Moria-like caricature cues: high cheekbones, huge smoky eyes, arched brows,
+    // long nose, strong fuchsia lips and a beauty mark, all on the true 3D head.
+    const eyeWhite = new THREE.InstancedMesh(new THREE.SphereGeometry(.040,10,7), flat(0xfff4f0), 2);
+    const smoky = new THREE.InstancedMesh(new THREE.SphereGeometry(.054,10,7), flat(0x4c163d), 2);
+    const iris = new THREE.InstancedMesh(new THREE.SphereGeometry(.018,8,6), flat(0x241313), 2);
+    const brow = new THREE.InstancedMesh(new THREE.BoxGeometry(.102,.014,.014), flat(0x240914), 2);
+    const cheek = new THREE.InstancedMesh(new THREE.SphereGeometry(.055,8,6), flat(0xf0b1a1), 2);
+    const fd = new THREE.Object3D();
+    [-1,1].forEach((side,i)=>{
+      fd.position.set(side*.072,.060,-.168); fd.scale.set(1.42,.58,.30); fd.rotation.set(0,0,0); fd.updateMatrix(); eyeWhite.setMatrixAt(i,fd.matrix);
+      fd.position.set(side*.072,.074,-.157); fd.scale.set(1.65,.72,.20); fd.rotation.set(0,0,side*.10); fd.updateMatrix(); smoky.setMatrixAt(i,fd.matrix);
+      fd.position.set(side*.072,.058,-.194); fd.scale.set(1,.92,.30); fd.rotation.set(0,0,0); fd.updateMatrix(); iris.setMatrixAt(i,fd.matrix);
+      fd.position.set(side*.075,.132,-.169); fd.scale.set(1,1,1); fd.rotation.set(0,0,side*-.22); fd.updateMatrix(); brow.setMatrixAt(i,fd.matrix);
+      fd.position.set(side*.118,-.010,-.132); fd.scale.set(1.05,.48,.18); fd.rotation.set(0,0,side*.10); fd.updateMatrix(); cheek.setMatrixAt(i,fd.matrix);
+    });
+    eyeWhite.instanceMatrix.needsUpdate=true; smoky.instanceMatrix.needsUpdate=true; iris.instanceMatrix.needsUpdate=true; brow.instanceMatrix.needsUpdate=true; cheek.instanceMatrix.needsUpdate=true;
+    headBone.add(cheek,smoky,eyeWhite,iris,brow);
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(.030,.125,8), flat(0xd5897f)); nose.rotation.x=-Math.PI/2; nose.position.set(0,-.005,-.205); headBone.add(nose);
+    const upperLip = new THREE.Mesh(new THREE.SphereGeometry(.040,10,7), flat(0xa60059)); upperLip.scale.set(1.52,.28,.25); upperLip.position.set(0,-.079,-.190); headBone.add(upperLip);
+    const lowerLip = new THREE.Mesh(new THREE.SphereGeometry(.039,10,7), flat(0xf13b91)); lowerLip.scale.set(1.58,.31,.25); lowerLip.position.set(0,-.101,-.188); headBone.add(lowerLip);
+    const beauty = new THREE.Mesh(new THREE.SphereGeometry(.008,6,4), flat(0x291019)); beauty.position.set(.095,-.052,-.194); headBone.add(beauty);
+
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218, 16, 10, 0, Math.PI*2, 0, Math.PI*.57), flat(0x040306));
+    cap.scale.set(.91,.92,.90); cap.position.set(0,.125,.035); headBone.add(cap);
 
     // Long, straight jet-black hair; 13 strips are a single instanced draw call.
-    const hg = new THREE.BoxGeometry(.035,1.28,.055);
+    const hg = new THREE.BoxGeometry(.030,1.05,.048);
     const hair = new THREE.InstancedMesh(hg, flat(0x030305), 13);
     const hd = new THREE.Object3D();
     for(let i=0;i<13;i++){
       const u=(i-6)/6; const front=Math.abs(u)>.72;
-      hd.position.set(u*.205,-.54,front ? -.015 : .105 + .035*(1-Math.abs(u)));
+      hd.position.set(u*.205,-.43,front ? -.006 : .105 + .030*(1-Math.abs(u)));
       hd.scale.set(front?1.3:1,1 + .10*(1-Math.abs(u)),1); hd.rotation.set(0,0,u*.025); hd.updateMatrix(); hair.setMatrixAt(i,hd.matrix);
     }
     hair.instanceMatrix.needsUpdate=true; headBone.add(hair);
@@ -765,7 +792,7 @@ requestAnimationFrame(frame);
 
 window.__QS_TEST__ = {
   start: startGame,
-  state: () => ({ started, ended, result: resultState, entity, qTimer, qUses, qAffected, vehicleMode, x: worldPos().x, z: worldPos().z, fpsAvg, fpsMedian, fpsP5, quality: resolutionScale, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, baseReady, baseBones, baseMeshes, baseAnimations }),
+  state: () => ({ started, ended, result: resultState, entity, qTimer, qUses, qAffected, vehicleMode, x: worldPos().x, z: worldPos().z, fpsAvg, fpsMedian, fpsP5, quality: resolutionScale, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, gpuVendor, gpuRenderer, baseReady, baseBones, baseMeshes, baseAnimations }),
   teleport: (x, z) => { if (vehicleMode) taxi.position.set(x, 0, z); else { playerPos.set(x, 0, z); moria.position.copy(playerPos); playerBody.setNextKinematicTranslation({ x, y: 1.2, z }); } },
   nearTaxi: () => { vehicleMode = false; moria.visible = true; playerPos.set(taxi.position.x + 2.4, 0, taxi.position.z); moria.position.copy(playerPos); },
   destination: () => { if (vehicleMode) taxi.position.set(destination.x, 0, destination.z); else { playerPos.copy(destination); moria.position.copy(playerPos); } },
