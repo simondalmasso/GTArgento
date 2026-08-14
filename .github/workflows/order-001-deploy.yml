@@ -24,15 +24,19 @@ jobs:
       - name: Checkout exact deploy source
         uses: actions/checkout@v4
 
-      - name: Materialize ARQ visual repair
+      - name: Materialize CC0 Quaternius humanoid base
         run: |
-          if [ -f .arq-visual-pass.py ]; then
-            python .arq-visual-pass.py
-            rm .arq-visual-pass.py
+          if [ ! -f public/assets/moria-base.glb ]; then
+            mkdir -p public/assets
+            curl -L --fail --retry 3 -o public/assets/moria-base.glb \
+              https://raw.githubusercontent.com/fastrouter/experiments-costa-vista/main/public/assets/characters.glb
+            test "$(stat -c%s public/assets/moria-base.glb)" -eq 2487868
+            sha256sum public/assets/moria-base.glb | tee moria-base.sha256
+            npx --yes @gltf-transform/cli inspect public/assets/moria-base.glb | tee moria-base-inspect.txt
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add src/game.ts playwright.config.ts tests/perf.spec.ts .arq-visual-pass.py
-            git commit -m 'order-001: final Moria Baires camera and perf repair'
+            git add public/assets/moria-base.glb
+            git commit -m 'order-001: add CC0 Quaternius humanoid base'
             git push origin HEAD:order-001-deploy
           fi
 
@@ -102,5 +106,7 @@ jobs:
             production.html
             package-lock.json
             package-lock.sha256
+            moria-base.sha256
+            moria-base-inspect.txt
             playwright-report/
             test-results/
