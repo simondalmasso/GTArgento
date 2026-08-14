@@ -522,19 +522,15 @@ function styleMoriaRig(root: THREE.Group) {
   const faceShell = new THREE.Mesh(faceShellGeo, new THREE.MeshBasicMaterial({ map: faceTex, color:0xffffff, toneMapped:false }));
   faceShell.scale.copy(headBase.scale); faceShell.position.copy(headBase.position); headBone.add(faceShell);
 
-  // True facial volume: high cheekbones, long bridge, defined tip, lips and tapered chin.
-  const cheekGeo=new THREE.SphereGeometry(.040,10,7); const cheeks=new THREE.InstancedMesh(cheekGeo,flat(0xe8a294),2); const cd=new THREE.Object3D();
-  [-1,1].forEach((side,i)=>{cd.position.set(side*.105,-.010,-.176);cd.scale.set(1.15,.55,.38);cd.updateMatrix();cheeks.setMatrixAt(i,cd.matrix)});cheeks.instanceMatrix.needsUpdate=true;headBone.add(cheeks);
-  const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(.014,.075,4,7), flat(0xd28b80)); bridge.position.set(0,.005,-.202); bridge.scale.z=.72; headBone.add(bridge);
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(.027,10,7), flat(0xd58d82)); tip.scale.set(.86,.68,.76); tip.position.set(0,-.047,-.220); headBone.add(tip);
-  const upperLip=new THREE.Mesh(new THREE.SphereGeometry(.032,10,7),flat(0xa60055));upperLip.scale.set(1.62,.25,.23);upperLip.position.set(0,-.098,-.207);headBone.add(upperLip);
-  const lowerLip=new THREE.Mesh(new THREE.SphereGeometry(.034,10,7),flat(0xf04491));lowerLip.scale.set(1.68,.28,.23);lowerLip.position.set(0,-.116,-.205);headBone.add(lowerLip);
-  const chin=new THREE.Mesh(new THREE.SphereGeometry(.034,10,7),flat(0xda9488));chin.scale.set(1.25,.66,.52);chin.position.set(0,-.174,-.164);headBone.add(chin);
-  const beauty = new THREE.Mesh(new THREE.SphereGeometry(.0055,6,4), flat(0x251019)); beauty.position.set(.087,-.052,-.205); headBone.add(beauty);
+  // Minimal true-3D profile depth over the painted curved face; avoid cartoon overlays.
+  const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(.012,.070,4,7), flat(0xd28b80));
+  bridge.position.set(0,.006,-.203); bridge.scale.set(.9,1,.58); headBone.add(bridge);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(.022,10,7), flat(0xd58d82));
+  tip.scale.set(.82,.64,.72); tip.position.set(0,-.046,-.218); headBone.add(tip);
+  const beauty = new THREE.Mesh(new THREE.SphereGeometry(.0048,6,4), flat(0x251019)); beauty.position.set(.086,-.052,-.205); headBone.add(beauty);
 
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218,20,14,0,Math.PI*2,0,Math.PI*.54), flat(0x020204));
   cap.scale.set(.91,.91,.92); cap.position.set(0,.137,.035); headBone.add(cap);
-  const partLine=new THREE.Mesh(new THREE.BoxGeometry(.010,.040,.010),flat(0xdf9d8f)); partLine.position.set(0,.194,-.181); partLine.rotation.x=.18; headBone.add(partLine);
   const frontLocks=new THREE.InstancedMesh(new THREE.BoxGeometry(.052,.76,.045),flat(0x020204),2); const ld=new THREE.Object3D();
   [-1,1].forEach((side,i)=>{ld.position.set(side*.176,-.205,-.105);ld.rotation.set(0,side*.06,side*.025);ld.scale.set(1,1,1);ld.updateMatrix();frontLocks.setMatrixAt(i,ld.matrix)}); frontLocks.instanceMatrix.needsUpdate=true; headBone.add(frontLocks);
 
