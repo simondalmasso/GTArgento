@@ -385,7 +385,7 @@ function buildBaires() {
   const bollards: Array<{ p: THREE.Vector3; s: THREE.Vector3 }> = [];
   for (let x = -55; x <= 55; x += 8) { bollards.push({ p:new THREE.Vector3(x,.32,14.4), s:new THREE.Vector3(.13,.64,.13) }); }
   scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1), flat(0xe7c8a1), bollards));
-  const lane:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(let z=-56;z<56;z+=10) lane.push({p:new THREE.Vector3(-6,.035,z),s:new THREE.Vector3(.13,.025,3.6)}); scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0xe9e1c9),lane));
+  const laneDashes:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(let z=-56;z<56;z+=10) laneDashes.push({p:new THREE.Vector3(-6,.035,z),s:new THREE.Vector3(.13,.025,3.6)}); scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0xe9e1c9),laneDashes));
   const awnings:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(const x of [-50,-28,21,44]) awnings.push({p:new THREE.Vector3(x,3.35,18.25),s:new THREE.Vector3(6.8,.14,1.1)}); scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0x98104f),awnings));
   const cornices:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(const x of [-50,-28,21,44]) { cornices.push({p:new THREE.Vector3(x,8.85,18.4),s:new THREE.Vector3(8.2,.18,.55)}); cornices.push({p:new THREE.Vector3(x,4.55,18.35),s:new THREE.Vector3(8.0,.12,.5)}); } scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0xc6a2b7),cornices));
   const lamps:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(const x of [-52,-38,-24,-10,8,22,36,50]) lamps.push({p:new THREE.Vector3(x,2.2,13.9),s:new THREE.Vector3(.09,4.4,.09)}); scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0x25202a),lamps));
