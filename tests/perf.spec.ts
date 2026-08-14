@@ -31,6 +31,6 @@ test('records objective active-gameplay performance', async ({ page }, testInfo)
 
   expect(Number(state.drawCalls)).toBeLessThanOrEqual(140);
   expect(Number(state.triangles)).toBeLessThanOrEqual(350_000);
-  expect(Number(state.fpsMedian)).toBeGreaterThan(0);
-  expect(Number(state.fpsP5)).toBeGreaterThan(0);
+  expect(Number(state.fpsMedian)).toBeGreaterThanOrEqual(mobile ? 50 : 58);
+  expect(Number(state.fpsP5)).toBeGreaterThanOrEqual(mobile ? 40 : 45);
 });
