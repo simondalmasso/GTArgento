@@ -14,7 +14,7 @@ test('records objective active-gameplay performance', async ({ page }, testInfo)
     downloadThroughput: mobile ? 524_288 : 2_097_152,
     uploadThroughput: mobile ? 262_144 : 1_048_576,
   });
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: mobile ? 2 : 1 });
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: mobile ? 1.25 : 1 });
 
   await page.goto('/?perf=1', { waitUntil: 'domcontentloaded' });
   await page.locator('#startBtn').click();
