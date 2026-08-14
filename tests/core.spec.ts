@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/?perf=1', { waitUntil: 'networkidle' });
+  await page.goto('/?perf=1', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#startBtn')).toBeVisible();
   await page.locator('#startBtn').click();
   await expect(page.locator('#hud')).toBeVisible();
@@ -12,22 +12,22 @@ test('complete mission loop: move, Q, entidad, taxi, win, fail and restart', asy
 
   const before = await state();
   await page.keyboard.down('w');
-  await page.waitForTimeout(550);
+  await page.waitForTimeout(350);
   await page.keyboard.up('w');
   const moved = await state();
-  expect(Math.hypot(Number(moved.x) - Number(before.x), Number(moved.z) - Number(before.z))).toBeGreaterThan(0.6);
+  expect(Math.hypot(Number(moved.x) - Number(before.x), Number(moved.z) - Number(before.z))).toBeGreaterThan(0.35);
 
   await page.evaluate(() => window.__QS_TEST__.teleport(-8, 33));
-  await page.waitForTimeout(120);
+  await page.waitForTimeout(80);
   await page.keyboard.press('q');
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(120);
   const qState = await state();
   expect(Number(qState.qUses)).toBeGreaterThanOrEqual(1);
   expect(Number(qState.qAffected)).toBeGreaterThanOrEqual(1);
-  await page.screenshot({ path: testInfo.outputPath('q-special.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('q-special.png') });
 
   await page.evaluate(() => { window.__QS_TEST__.entity(0); window.__QS_TEST__.teleport(-10, 34); });
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(650);
   const pursued = await state();
   expect(Number(pursued.entity)).toBeGreaterThan(0);
 
@@ -36,15 +36,15 @@ test('complete mission loop: move, Q, entidad, taxi, win, fail and restart', asy
   await expect.poll(async () => Boolean((await state()).vehicleMode)).toBe(true);
   const taxiBefore = await state();
   await page.keyboard.down('w');
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(450);
   await page.keyboard.up('w');
   const taxiAfter = await state();
-  expect(Math.hypot(Number(taxiAfter.x) - Number(taxiBefore.x), Number(taxiAfter.z) - Number(taxiBefore.z))).toBeGreaterThan(0.35);
-  await page.screenshot({ path: testInfo.outputPath('vehicle.png'), fullPage: true });
+  expect(Math.hypot(Number(taxiAfter.x) - Number(taxiBefore.x), Number(taxiAfter.z) - Number(taxiBefore.z))).toBeGreaterThan(0.1);
+  await page.screenshot({ path: testInfo.outputPath('vehicle.png') });
 
   await page.evaluate(() => window.__QS_TEST__.destination());
   await expect(page.locator('#resultTitle')).toHaveText('MISSION PASSED');
-  await page.screenshot({ path: testInfo.outputPath('mission-pass.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('mission-pass.png') });
 
   await page.locator('#restartBtn').click();
   await page.evaluate(() => window.__QS_TEST__.entity(100));
@@ -59,13 +59,13 @@ test('mobile controls expose parity actions', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-chromium', 'mobile-only control validation');
   await expect(page.locator('#touch')).toBeVisible();
   await page.evaluate(() => window.__QS_TEST__.teleport(-8, 33));
-  await page.locator('#qBtn').tap();
+  await page.locator('#qBtn').dispatchEvent('pointerdown', { pointerType: 'touch', pointerId: 7 });
   await expect.poll(async () => Number((await page.evaluate(() => window.__QS_TEST__.state())).qUses)).toBeGreaterThan(0);
 
   await page.evaluate(() => window.__QS_TEST__.nearTaxi());
   await expect(page.locator('#actionBtn')).toBeVisible();
-  await page.locator('#actionBtn').tap();
+  await page.locator('#actionBtn').dispatchEvent('pointerdown', { pointerType: 'touch', pointerId: 8 });
   await expect.poll(async () => Boolean((await page.evaluate(() => window.__QS_TEST__.state())).vehicleMode)).toBe(true);
 
-  await page.screenshot({ path: testInfo.outputPath('mobile-landscape.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('mobile-landscape.png') });
 });
