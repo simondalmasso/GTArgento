@@ -15,7 +15,7 @@ concurrency:
 jobs:
   deploy-and-verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -23,34 +23,6 @@ jobs:
     steps:
       - name: Checkout exact deploy source
         uses: actions/checkout@v4
-
-      - name: Materialize CC0 Quaternius humanoid base
-        run: |
-          if [ ! -f public/assets/moria-base.glb ]; then
-            mkdir -p public/assets
-            curl -L --fail --retry 3 -o public/assets/moria-base.glb \
-              https://raw.githubusercontent.com/fastrouter/experiments-costa-vista/main/public/assets/characters.glb
-            test "$(stat -c%s public/assets/moria-base.glb)" -eq 2487868
-            sha256sum public/assets/moria-base.glb | tee moria-base.sha256
-            npx --yes @gltf-transform/cli inspect public/assets/moria-base.glb | tee moria-base-inspect.txt
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add public/assets/moria-base.glb
-            git commit -m 'order-001: add CC0 Quaternius humanoid base'
-            git push origin HEAD:order-001-deploy
-          fi
-
-      - name: Materialize isolated base preview probe
-        run: |
-          if [ -f .arq-base-preview.py ]; then
-            python .arq-base-preview.py
-            rm .arq-base-preview.py
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add src/game.ts tests/base-preview.spec.ts .arq-base-preview.py
-            git commit -m 'order-001: add isolated CC0 humanoid probe'
-            git push origin HEAD:order-001-deploy
-          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -71,7 +43,7 @@ jobs:
 
       - name: Record source and bundle hashes
         run: |
-          printf 'SOURCE_SHA=%s\n' "$(git rev-parse HEAD)" | tee build-evidence.txt
+          printf 'SOURCE_SHA=%s\n' "$GITHUB_SHA" | tee build-evidence.txt
           printf 'BUILD_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a build-evidence.txt
           find dist -type f -print0 | sort -z | xargs -0 sha256sum | tee dist-sha256.txt
           sha256sum dist-sha256.txt | tee -a build-evidence.txt
@@ -84,9 +56,8 @@ jobs:
 
       - name: Verify canonical production URL
         run: |
-          SOURCE_SHA=$(git rev-parse HEAD)
           for i in 1 2 3 4 5 6; do
-            code=$(curl -L -sS -o production.html -w '%{http_code}' "$E2E_BASE_URL/?deploy_sha=$SOURCE_SHA" || true)
+            code=$(curl -L -sS -o production.html -w '%{http_code}' "$E2E_BASE_URL/?deploy_sha=$GITHUB_SHA" || true)
             echo "attempt=$i http=$code"
             if [ "$code" = "200" ]; then break; fi
             sleep 5
@@ -94,21 +65,17 @@ jobs:
           test "$code" = "200"
           grep -q 'QUIÉNES SON' production.html
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium webkit
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
 
-      - name: Production desktop/mobile/WebKit E2E headed
-        run: xvfb-run -a npx playwright test
+      - name: Capture CC0 humanoid visual probe
+        run: xvfb-run -a npx playwright test tests/base-preview.spec.ts --project=desktop-chromium
 
-      - name: Package lock evidence
-        if: always()
-        run: sha256sum package-lock.json | tee package-lock.sha256
-
-      - name: Upload ORDER-001 evidence
+      - name: Upload probe evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: order-001-production-evidence-${{ github.sha }}
+          name: order-001-cc0-probe-${{ github.sha }}
           if-no-files-found: warn
           retention-days: 30
           path: |
@@ -116,9 +83,5 @@ jobs:
             dist-sha256.txt
             deploy.log
             production.html
-            package-lock.json
-            package-lock.sha256
-            moria-base.sha256
-            moria-base-inspect.txt
             playwright-report/
             test-results/
