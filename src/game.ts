@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import RAPIER from '@dimforge/rapier3d-compat';
 import './style.css';
 
@@ -378,7 +379,9 @@ const moria = createMoria(); scene.add(moria);
 let basePreview: THREE.Group | null = null;
 let baseReady = false;
 if (BASE_PREVIEW) {
-  new GLTFLoader().load('/assets/moria-base.glb', gltf => {
+  const previewLoader = new GLTFLoader();
+  previewLoader.setMeshoptDecoder(MeshoptDecoder);
+  previewLoader.load('/assets/moria-base.glb', gltf => {
     const root = gltf.scene;
     const initial = new THREE.Box3().setFromObject(root);
     const size = initial.getSize(new THREE.Vector3());
