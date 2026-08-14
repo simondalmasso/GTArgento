@@ -76,16 +76,16 @@ physics.createCollider(RAPIER.ColliderDesc.capsule(0.7, 0.32), playerBody);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x170d2a);
-scene.fog = new THREE.Fog(0x170d2a, 66, 150);
+scene.fog = null;
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 220);
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', precision: 'lowp', stencil: false });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.62;
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.toneMappingExposure = 1;
 renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-scene.add(new THREE.HemisphereLight(0x9d91c0, 0x221326, 1.8));
+
 const key = new THREE.DirectionalLight(0xffddec, 2.4);
 key.position.set(-28, 42, 24);
 key.castShadow = false;
@@ -95,13 +95,13 @@ key.shadow.camera.right = 62;
 key.shadow.camera.top = 62;
 key.shadow.camera.bottom = -62;
 key.shadow.bias = -0.0008;
-scene.add(key);
+
 const corrientesGlow = new THREE.PointLight(0xff2d9f, 28, 48, 1.7);
 corrientesGlow.position.set(8, 7, 8);
-scene.add(corrientesGlow);
+
 const coolGlow = new THREE.PointLight(0x3ebfff, 18, 42, 1.8);
 coolGlow.position.set(-34, 9, -20);
-scene.add(coolGlow);
+
 
 const C = {
   road: cheapMat({ color: 0x12131b, roughness: 0.96 }),
@@ -130,7 +130,7 @@ function cheapMat(p: Record<string, unknown> = {}) {
     side: p.side as THREE.Side | undefined,
     depthWrite: p.depthWrite !== false,
     blending: p.blending as THREE.Blending | undefined,
-    toneMapped: p.toneMapped !== false,
+    toneMapped: false,
   });
 }
 
@@ -143,7 +143,7 @@ function meshBox(w: number, h: number, d: number, material: THREE.Material, x = 
 }
 function glowSprite(color: number, scale: number, opacity = 0.22) {
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ color, transparent: true, opacity, depthWrite: false, blending: THREE.AdditiveBlending }));
-  sprite.scale.setScalar(scale);
+  sprite.scale.setScalar(scale * 0.46);
   return sprite;
 }
 function labelTexture(text: string, bg: string, fg: string, accent: string, width = 1024, height = 256) {
@@ -290,14 +290,8 @@ function createMoria() {
 }
 
 function createNPC(kind: NPCKind, x: number, z: number): NPC {
-  const root = new THREE.Group();
-  const bodyColor = kind === 'paparazzi' ? 0x7a263f : kind === 'fan' ? 0x217a94 : 0x5c5964;
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 1.18, 4, 7), cheapMat({ color: bodyColor, roughness: 0.75 })); body.position.y = 1.05; root.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.27, 10, 7), C.skin); head.position.y = 2.05; root.add(head);
-  if (kind === 'paparazzi') root.add(meshBox(0.4, 0.27, 0.23, C.black, 0, 1.72, -0.34));
-  else if (kind === 'fan') { const phone = meshBox(0.14, 0.28, 0.035, cheapMat({ color: 0xd6d8e2, metalness: 0.5 }), 0.3, 1.78, -0.18); phone.rotation.z = -0.16; root.add(phone); }
-  root.position.set(x, 0, z); scene.add(root);
-  return { root, kind, state: 'WANDER', home: new THREE.Vector3(x, 0, z), target: new THREE.Vector3(x, 0, z), speed: kind === 'paparazzi' ? 4.2 : kind === 'fan' ? 3 : 1.7, timer: Math.random() * 2, knock: new THREE.Vector3() };
+  const root = new THREE.Group(); root.position.set(x,0,z);
+  return { root, kind, state:'WANDER', home:new THREE.Vector3(x,0,z), target:new THREE.Vector3(x,0,z), speed:kind==='paparazzi'?4.2:kind==='fan'?3:1.7, timer:Math.random()*2, knock:new THREE.Vector3() };
 }
 
 function buildBaires() {
@@ -391,13 +385,21 @@ function buildBaires() {
   const bollards: Array<{ p: THREE.Vector3; s: THREE.Vector3 }> = [];
   for (let x = -55; x <= 55; x += 8) { bollards.push({ p:new THREE.Vector3(x,.32,14.4), s:new THREE.Vector3(.13,.64,.13) }); }
   scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1), flat(0xe7c8a1), bollards));
+  const lane:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(let z=-56;z<56;z+=10) lane.push({p:new THREE.Vector3(-6,.035,z),s:new THREE.Vector3(.13,.025,3.6)}); scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0xe9e1c9),lane));
+  const awnings:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(const x of [-50,-28,21,44]) awnings.push({p:new THREE.Vector3(x,3.35,18.25),s:new THREE.Vector3(6.8,.14,1.1)}); scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0x98104f),awnings));
+  const cornices:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(const x of [-50,-28,21,44]) { cornices.push({p:new THREE.Vector3(x,8.85,18.4),s:new THREE.Vector3(8.2,.18,.55)}); cornices.push({p:new THREE.Vector3(x,4.55,18.35),s:new THREE.Vector3(8.0,.12,.5)}); } scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0xc6a2b7),cornices));
+  const lamps:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[]; for(const x of [-52,-38,-24,-10,8,22,36,50]) lamps.push({p:new THREE.Vector3(x,2.2,13.9),s:new THREE.Vector3(.09,4.4,.09)}); scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0x25202a),lamps));
 
-  for (const [x, z] of [[-16, -5], [3, 15], [3, -5]] as const) {
-    scene.add(meshBox(0.16, 4, 0.16, C.black, x, 2, z));
-    scene.add(meshBox(0.7, 1.8, 0.55, C.black, x, 4.25, z));
-    const r = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), hot(0xff1d45, 1.8)); r.position.set(x, 4.7, z - 0.29); scene.add(r);
-    const gr = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), hot(0x46ff93, 1.2)); gr.position.set(x, 3.92, z - 0.29); scene.add(gr);
-  }
+
+  const tl = [[-16,-5],[3,15],[3,-5]] as const;
+  const poles=tl.map(([x,z])=>({p:new THREE.Vector3(x,2,z),s:new THREE.Vector3(.16,4,.16)}));
+  const heads=tl.map(([x,z])=>({p:new THREE.Vector3(x,4.25,z),s:new THREE.Vector3(.7,1.8,.55)}));
+  const reds=tl.map(([x,z])=>({p:new THREE.Vector3(x,4.7,z-.29),s:new THREE.Vector3(.34,.34,.34)}));
+  const greens=tl.map(([x,z])=>({p:new THREE.Vector3(x,3.92,z-.29),s:new THREE.Vector3(.34,.34,.34)}));
+  scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),C.black,poles));
+  scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),C.black,heads));
+  scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0xff294b),reds));
+  scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(0x47f58d),greens));
 }
 
 const playerPos = new THREE.Vector3(0, 0, 50);
@@ -415,59 +417,57 @@ let moriaMotion: 'idle' | 'walk' | 'sprint' | 'drive' | 'special' = 'idle';
 let specialPose = 0;
 
 function styleMoriaRig(root: THREE.Group) {
-  const bodysuit = flat(0xff4aa7);
+  const bodysuit = flat(0xff1590);
   const jointAccent = flat(0xd51272);
   root.traverse(o => {
     if (o instanceof THREE.SkinnedMesh || o instanceof THREE.Mesh) {
-      o.material = (o.name.endsWith('_2') || o.name === 'Mannequin_2') ? jointAccent.clone() : bodysuit.clone();
-      o.castShadow = false;
-      o.receiveShadow = false;
+      o.material = (o.name.endsWith('_2') || o.name === 'Mannequin_2') ? jointAccent : bodysuit;
+      o.castShadow = false; o.receiveShadow = false;
     }
   });
 
-  // Original couture silhouette around the animated body.
-  const dress = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.42, 0.72, 18), flat(0xff1590));
-  dress.position.set(0, 0.82, 0); dress.scale.z = 0.76; root.add(dress);
-  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.285, 0.025, 7, 22), flat(0x260016));
+  const dress = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.39, 0.78, 14), flat(0xff0588));
+  dress.position.set(0, 0.81, 0); dress.scale.z = 0.72; root.add(dress);
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.272, 0.022, 6, 16), flat(0x210010));
   belt.rotation.x = Math.PI / 2; belt.position.y = 1.08; root.add(belt);
-  const shoulder = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.62, 4, 10), flat(0xff78bc));
-  shoulder.rotation.z = Math.PI / 2; shoulder.position.set(0, 1.34, 0.03); shoulder.scale.set(1, .9, .82); root.add(shoulder);
-  for (const side of [-1, 1]) {
-    const fur = new THREE.Mesh(new THREE.CapsuleGeometry(0.115, 0.36, 4, 8), flat(0xff78bc));
-    fur.rotation.z = Math.PI / 2; fur.position.set(side * 0.39, 1.31, 0.025); root.add(fur);
-  }
 
-  // A true 3D caricature head: geometry-based eyes, brows, nose, lips and beauty mark.
+  // Fur coat/sleeves: many tufts in ONE instanced draw call, slimmer than the old shoulder blob.
+  const furGeo = new THREE.CapsuleGeometry(0.075, 0.27, 3, 6);
+  const fur = new THREE.InstancedMesh(furGeo, flat(0xff62b4), 12);
+  const fd = new THREE.Object3D();
+  const coat = [
+    [-.34,1.31,0,.85,1.1,-.25],[-.22,1.38,.01,.9,1.0,-.12],[-.08,1.41,.02,.9,.9,-.04],
+    [.08,1.41,.02,.9,.9,.04],[.22,1.38,.01,.9,1.0,.12],[.34,1.31,0,.85,1.1,.25],
+    [-.43,1.20,.01,.82,1.45,-.30],[-.48,1.02,.01,.78,1.35,-.18],[-.48,.84,.02,.70,1.20,-.08],
+    [.43,1.20,.01,.82,1.45,.30],[.48,1.02,.01,.78,1.35,.18],[.48,.84,.02,.70,1.20,.08]
+  ] as const;
+  coat.forEach(([x,y,z,sx,sy,rz],i)=>{ fd.position.set(x,y,z); fd.scale.set(sx,sy,.85); fd.rotation.set(0,0,rz); fd.updateMatrix(); fur.setMatrixAt(i,fd.matrix); });
+  fur.instanceMatrix.needsUpdate=true; root.add(fur);
+
   const headBone = root.getObjectByName('Head');
   if (headBone) {
-    const face = new THREE.Mesh(new THREE.SphereGeometry(0.205, 22, 18), flat(0xe1a092));
-    face.scale.set(.84, 1.12, .82); face.position.set(0, 0.035, -0.018); headBone.add(face);
-    const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.218, 20, 14, 0, Math.PI * 2, 0, Math.PI * .60), flat(0x09060b));
-    hairCap.scale.set(.94, 1.08, .9); hairCap.position.set(0, .085, .025); headBone.add(hairCap);
-    for (let i = 0; i < 9; i++) {
-      const x = -0.19 + i * 0.0475;
-      const strand = new THREE.Mesh(new THREE.CylinderGeometry(.018, .025, .72, 6), flat(0x070509));
-      strand.position.set(x, -.29, .055 + Math.abs(x) * .06); headBone.add(strand);
+    // UV-painted original caricature on actual 3D geometry: high brows, smoky eyes,
+    // long narrow nose, high cheekbones, fuchsia lips and beauty mark.
+    const faceMat = new THREE.MeshBasicMaterial({ map: makeMoriaFaceTexture(), color: 0xffffff, toneMapped:false });
+    const face = new THREE.Mesh(new THREE.SphereGeometry(0.205, 20, 16), faceMat);
+    face.scale.set(.80,1.18,.78); face.rotation.y=Math.PI/2; face.position.set(0,.035,-.018); headBone.add(face);
+
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218, 16, 10, 0, Math.PI*2, 0, Math.PI*.61), flat(0x050407));
+    cap.scale.set(.94,1.08,.92); cap.position.set(0,.09,.02); headBone.add(cap);
+
+    // Long, straight jet-black hair; 13 strips are a single instanced draw call.
+    const hg = new THREE.BoxGeometry(.035,1.28,.055);
+    const hair = new THREE.InstancedMesh(hg, flat(0x030305), 13);
+    const hd = new THREE.Object3D();
+    for(let i=0;i<13;i++){
+      const u=(i-6)/6; const front=Math.abs(u)>.72;
+      hd.position.set(u*.205,-.54,front ? -.015 : .105 + .035*(1-Math.abs(u)));
+      hd.scale.set(front?1.3:1,1 + .10*(1-Math.abs(u)),1); hd.rotation.set(0,0,u*.025); hd.updateMatrix(); hair.setMatrixAt(i,hd.matrix);
     }
-    for (const side of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(.043, 10, 7), flat(0xfff5f0));
-      eye.scale.set(1.32, .55, .34); eye.position.set(side * .071, .055, -.176); headBone.add(eye);
-      const iris = new THREE.Mesh(new THREE.SphereGeometry(.019, 8, 6), flat(0x1b1018));
-      iris.scale.z = .35; iris.position.set(side * .071, .053, -.202); headBone.add(iris);
-      const liner = new THREE.Mesh(new THREE.BoxGeometry(.104, .014, .014), flat(0x170815));
-      liner.position.set(side * .071, .082, -.198); liner.rotation.z = side * -.08; headBone.add(liner);
-      const brow = new THREE.Mesh(new THREE.BoxGeometry(.105, .016, .014), flat(0x2b0b1b));
-      brow.position.set(side * .073, .126, -.192); brow.rotation.z = side * -.22; headBone.add(brow);
-      const earring = new THREE.Mesh(new THREE.TorusGeometry(.039, .009, 6, 12), flat(0xf4d46b));
-      earring.rotation.y = Math.PI / 2; earring.position.set(side * .205, -.035, -.01); headBone.add(earring);
-    }
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(.034, 9, 7), flat(0xd58d82));
-    nose.scale.set(.72, 1.7, .72); nose.position.set(0, .002, -.205); headBone.add(nose);
-    const upperLip = new THREE.Mesh(new THREE.SphereGeometry(.043, 10, 7), flat(0xb4005e));
-    upperLip.scale.set(1.55, .34, .36); upperLip.position.set(0, -.072, -.205); headBone.add(upperLip);
-    const lowerLip = upperLip.clone(); lowerLip.material = flat(0xf13b8f); lowerLip.position.y = -.094; headBone.add(lowerLip);
-    const mark = new THREE.Mesh(new THREE.SphereGeometry(.008, 6, 5), flat(0x2a1019));
-    mark.position.set(.09, -.048, -.205); headBone.add(mark);
+    hair.instanceMatrix.needsUpdate=true; headBone.add(hair);
+
+    const ear = new THREE.InstancedMesh(new THREE.TorusGeometry(.038,.008,5,10), flat(0xf3cf66), 2);
+    const ed=new THREE.Object3D(); [-1,1].forEach((side,i)=>{ed.position.set(side*.205,-.045,-.005);ed.rotation.set(0,Math.PI/2,0);ed.updateMatrix();ear.setMatrixAt(i,ed.matrix)}); ear.instanceMatrix.needsUpdate=true; headBone.add(ear);
   }
 }
 
@@ -526,6 +526,29 @@ const npcs: NPC[] = [
   createNPC('fan', -28, 10), createNPC('fan', 8, -22),
   createNPC('neutral', 15, 10),
 ];
+const npcBodyMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,toneMapped:false});
+const npcBodies=new THREE.InstancedMesh(new THREE.CapsuleGeometry(.28,1.18,3,6),npcBodyMat,npcs.length);
+const npcHeads=new THREE.InstancedMesh(new THREE.SphereGeometry(.27,8,6),C.skin,npcs.length);
+const paparazzi=npcs.filter(n=>n.kind==='paparazzi'), fans=npcs.filter(n=>n.kind==='fan');
+const npcCameras=new THREE.InstancedMesh(new THREE.BoxGeometry(.4,.27,.23),C.black,paparazzi.length);
+const npcPhones=new THREE.InstancedMesh(new THREE.BoxGeometry(.14,.28,.035),flat(0xcbd0db),fans.length);
+scene.add(npcBodies,npcHeads,npcCameras,npcPhones);
+const npcDummy=new THREE.Object3D();
+function syncNPCVisuals(){
+  let ci=0,fi=0;
+  npcs.forEach((n,i)=>{
+    const pos=n.root.position, rot=n.root.rotation.y;
+    npcDummy.position.set(pos.x,1.05,pos.z);npcDummy.rotation.set(0,rot,0);npcDummy.scale.set(1,1,1);npcDummy.updateMatrix();npcBodies.setMatrixAt(i,npcDummy.matrix);
+    npcBodies.setColorAt(i,new THREE.Color(n.kind==='paparazzi'?0x8d234d:n.kind==='fan'?0x197e9a:0x696570));
+    npcDummy.position.set(pos.x,2.05,pos.z);npcDummy.rotation.set(0,rot,0);npcDummy.updateMatrix();npcHeads.setMatrixAt(i,npcDummy.matrix);
+    if(n.kind==='paparazzi'){npcDummy.position.set(pos.x,1.72,pos.z-.34);npcDummy.rotation.set(0,rot,0);npcDummy.updateMatrix();npcCameras.setMatrixAt(ci++,npcDummy.matrix)}
+    if(n.kind==='fan'){npcDummy.position.set(pos.x+.3,1.78,pos.z-.18);npcDummy.rotation.set(0,rot,-.16);npcDummy.updateMatrix();npcPhones.setMatrixAt(fi++,npcDummy.matrix)}
+  });
+  npcBodies.instanceMatrix.needsUpdate=true; npcHeads.instanceMatrix.needsUpdate=true; npcCameras.instanceMatrix.needsUpdate=true; npcPhones.instanceMatrix.needsUpdate=true;
+  if(npcBodies.instanceColor) npcBodies.instanceColor.needsUpdate=true;
+}
+syncNPCVisuals();
+
 
 const destination = new THREE.Vector3(47, 0, -43);
 let started = false;
@@ -555,7 +578,7 @@ let dragging = false;
 let mouseLast: Vec2 = { x: 0, y: 0 };
 let lastTime = performance.now();
 let elapsed = 0;
-let resolutionScale = isCoarse ? 0.62 : 0.68;
+let resolutionScale = isCoarse ? 0.58 : 0.64;
 const fpsSamples: number[] = [];
 let fpsAvg = 60;
 let fpsMedian = 60;
@@ -604,7 +627,7 @@ function resetGame() {
   vehicleMode = false; vehicleSpeed = 0; vehicleHeading = Math.PI / 2; taxi.position.set(16, 0, 6); taxi.rotation.y = vehicleHeading;
   playerPos.set(0, 0, 50); playerBody.setNextKinematicTranslation({ x: 0, y: 1.2, z: 50 }); moria.visible = !BASE_PREVIEW; moria.position.copy(playerPos); moria.rotation.y = 0; if (basePreview) { basePreview.position.x = playerPos.x; basePreview.position.z = playerPos.z; basePreview.rotation.y = 0; }
   cameraYaw = 0; cameraPitch = 0.28; cameraDistance = 7.6;
-  npcs.forEach((n, i) => { n.root.position.copy(n.home); n.state = 'WANDER'; n.timer = 0.5 + i * 0.1; n.knock.set(0, 0, 0); });
+  npcs.forEach((n, i) => { n.root.position.copy(n.home); n.state = 'WANDER'; n.timer = 0.5 + i * 0.1; n.knock.set(0, 0, 0); }); syncNPCVisuals();
   objective.textContent = 'SALÍ POR CORRIENTES · EVITÁ A LOS PAPARAZZI'; updateHud();
 }
 function startGame() {
@@ -703,6 +726,7 @@ function updateNPCs(dt: number) {
       if (n.timer <= 0) chooseTarget(n); const d = n.target.clone().sub(pos).setY(0); if (d.length() > 0.3) { d.normalize(); pos.addScaledVector(d, n.speed * dt); n.root.rotation.y = Math.atan2(d.x, d.z); }
     }
   }
+  syncNPCVisuals();
   if (entity >= 100) finish('fail'); updateHud();
 }
 function updateQ(dt: number) {
@@ -724,7 +748,7 @@ function updateQuality(dt: number) {
   const fps = 1 / Math.max(0.001, dt); fpsSamples.push(fps); if (fpsSamples.length > 480) fpsSamples.shift(); qualityClock += dt;
   if (qualityClock < 3.5) return; qualityClock = 0;
   const sorted = [...fpsSamples].sort((a, b) => a - b); fpsAvg = fpsSamples.reduce((a, b) => a + b, 0) / Math.max(1, fpsSamples.length); fpsMedian = sorted[Math.floor(sorted.length * 0.5)] ?? fpsAvg; fpsP5 = sorted[Math.floor(sorted.length * 0.05)] ?? fpsAvg;
-  if (fpsAvg < 50 && resolutionScale > 0.40) { resolutionScale = Math.max(0.40, resolutionScale - 0.07); updateRendererSize(); }
+  if (fpsAvg < 50 && resolutionScale > 0.32) { resolutionScale = Math.max(0.32, resolutionScale - 0.06); updateRendererSize(); }
   else if (fpsAvg > 59 && fpsP5 > 47 && resolutionScale < 0.92) { resolutionScale = Math.min(0.92, resolutionScale + 0.04); updateRendererSize(); }
   if (PERF_MODE) perfEl.textContent = `FPS avg ${fpsAvg.toFixed(1)} · med ${fpsMedian.toFixed(1)} · p5 ${fpsP5.toFixed(1)}\nquality ${resolutionScale.toFixed(2)} · DPR ${(Math.min(devicePixelRatio, 1.5) * resolutionScale).toFixed(2)}\ndraw ${renderer.info.render.calls} · tris ${renderer.info.render.triangles}`;
 }
