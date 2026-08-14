@@ -55,7 +55,6 @@ const qBtn = $('#qBtn') as HTMLButtonElement;
 const runBtn = $('#runBtn') as HTMLButtonElement;
 const actionBtn = $('#actionBtn') as HTMLButtonElement;
 const qCooldown = $('#qCooldown');
-const orientation = $('#orientation');
 const perfEl = $('#perf');
 const resultTitle = $('#resultTitle');
 const resultKicker = $('#resultKicker');
@@ -663,18 +662,25 @@ let fpsMedian = 60;
 let fpsP5 = 60;
 let qualityClock = 0;
 
-function updateRendererSize() {
+function refreshViewport() {
+  const width = Math.max(1, window.innerWidth);
+  const height = Math.max(1, window.innerHeight);
+  const portrait = height > width;
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5) * resolutionScale);
-  renderer.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth / innerHeight;
+  renderer.setSize(width, height, false);
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
+  document.documentElement.dataset.gameOrientation = portrait ? 'portrait' : 'landscape';
+  hud.dataset.orientation = portrait ? 'portrait' : 'landscape';
+  touch.dataset.orientation = portrait ? 'portrait' : 'landscape';
 }
-function orientationGate() {
-  orientation.classList.toggle('hidden', !(isCoarse && innerHeight > innerWidth));
-}
-updateRendererSize(); orientationGate();
-addEventListener('resize', () => { updateRendererSize(); orientationGate(); });
-addEventListener('orientationchange', () => setTimeout(() => { updateRendererSize(); orientationGate(); }, 160));
+refreshViewport();
+addEventListener('resize', refreshViewport, { passive: true });
+addEventListener('orientationchange', () => {
+  refreshViewport();
+  requestAnimationFrame(refreshViewport);
+  setTimeout(refreshViewport, 120);
+}, { passive: true });
 document.addEventListener('visibilitychange', () => {
   keys.clear(); joy.x = 0; joy.y = 0; touchRun = false; stickKnob.style.transform = 'translate(0px,0px)'; lastTime = performance.now();
 });
@@ -751,13 +757,14 @@ function updateStick(e: PointerEvent) {
   const r = stick.getBoundingClientRect(); let x = (e.clientX - (r.left + r.width / 2)) / (r.width * 0.5); let y = (e.clientY - (r.top + r.height / 2)) / (r.height * 0.5); const len = Math.hypot(x, y); if (len > 1) { x /= len; y /= len; }
   joy.x = x; joy.y = y; stickKnob.style.transform = `translate(${x * r.width * 0.28}px,${y * r.height * 0.28}px)`;
 }
-stick.addEventListener('pointerdown', e => { e.preventDefault(); stick.setPointerCapture(e.pointerId); updateStick(e); });
-stick.addEventListener('pointermove', e => { if (stick.hasPointerCapture(e.pointerId)) updateStick(e); });
-function endStick(e: PointerEvent) { if (stick.hasPointerCapture(e.pointerId)) stick.releasePointerCapture(e.pointerId); joy.x = 0; joy.y = 0; stickKnob.style.transform = 'translate(0px,0px)'; }
+let stickPointer = -1;
+stick.addEventListener('pointerdown', e => { e.preventDefault(); stickPointer = e.pointerId; try { stick.setPointerCapture(e.pointerId); } catch {} updateStick(e); });
+stick.addEventListener('pointermove', e => { if (e.pointerId === stickPointer) updateStick(e); });
+function endStick(e: PointerEvent) { if (e.pointerId !== stickPointer) return; try { if (stick.hasPointerCapture(e.pointerId)) stick.releasePointerCapture(e.pointerId); } catch {} stickPointer = -1; joy.x = 0; joy.y = 0; stickKnob.style.transform = 'translate(0px,0px)'; }
 stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
-lookZone.addEventListener('pointerdown', e => { lookPointer = e.pointerId; lookLast = { x: e.clientX, y: e.clientY }; lookZone.setPointerCapture(e.pointerId); });
+lookZone.addEventListener('pointerdown', e => { lookPointer = e.pointerId; lookLast = { x: e.clientX, y: e.clientY }; try { lookZone.setPointerCapture(e.pointerId); } catch {} });
 lookZone.addEventListener('pointermove', e => { if (e.pointerId === lookPointer) { cameraYaw -= (e.clientX - lookLast.x) * 0.006; cameraPitch = THREE.MathUtils.clamp(cameraPitch + (e.clientY - lookLast.y) * 0.005, 0.08, 0.62); lookLast = { x: e.clientX, y: e.clientY }; } });
-lookZone.addEventListener('pointerup', () => { lookPointer = -1; }); lookZone.addEventListener('pointercancel', () => { lookPointer = -1; });
+lookZone.addEventListener('pointerup', e => { if (e.pointerId === lookPointer) lookPointer = -1; }); lookZone.addEventListener('pointercancel', e => { if (e.pointerId === lookPointer) lookPointer = -1; });
 runBtn.addEventListener('pointerdown', e => { e.preventDefault(); touchRun = true; runBtn.setPointerCapture(e.pointerId); });
 runBtn.addEventListener('pointerup', () => { touchRun = false; }); runBtn.addEventListener('pointercancel', () => { touchRun = false; });
 
@@ -818,9 +825,11 @@ function updateMission() {
 function updateCamera(dt: number) {
   const p = worldPos(); const target = new THREE.Vector3(p.x, vehicleMode ? 1.75 : 1.62, p.z);
   const cp = Math.cos(cameraPitch); const forward = new THREE.Vector3(Math.sin(cameraYaw) * cp, -Math.sin(cameraPitch), -Math.cos(cameraYaw) * cp);
-  const desired = target.clone().addScaledVector(forward, -cameraDistance); desired.y += 0.55;
+  const portrait = window.innerHeight > window.innerWidth;
+  const framingDistance = cameraDistance * (portrait ? (vehicleMode ? 1.18 : 1.32) : 1);
+  const desired = target.clone().addScaledVector(forward, -framingDistance); desired.y += portrait ? 1.05 : 0.55;
   if (shake > 0.004) { desired.x += (Math.random() - 0.5) * shake; desired.y += (Math.random() - 0.5) * shake; desired.z += (Math.random() - 0.5) * shake; }
-  camera.position.lerp(desired, 1 - Math.pow(0.002, dt)); camera.lookAt(target); camera.fov = 55 + fovKick; camera.updateProjectionMatrix();
+  camera.position.lerp(desired, 1 - Math.pow(0.002, dt)); camera.lookAt(target); camera.fov = (portrait ? 64 : 55) + fovKick; camera.updateProjectionMatrix();
 }
 function updateQuality(dt: number) {
   const fps = 1 / Math.max(0.001, dt); fpsSamples.push(fps); if (fpsSamples.length > 480) fpsSamples.shift(); qualityClock += dt;

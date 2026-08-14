@@ -55,3 +55,26 @@ h1 em { font-style:normal; color:var(--pink); -webkit-text-stroke:1px #ffd7ee; }
 .score { margin:24px 0; line-height:1.7; font-family:"Archivo Black"; letter-spacing:.08em; color:#ffbadd; }
 @media (pointer:coarse) { .touch:not(.hidden){display:block;} .hint{display:none!important;} }
 @media (max-height:520px) and (orientation:landscape) { .mission{min-width:190px}.mission b{font-size:10px}.entity-card{width:210px}.objective{top:66px;font-size:8px}.stick{width:104px;height:104px}.q-btn{width:82px;height:82px}.run-btn{right:126px;width:60px;height:60px}.action-btn{bottom:116px;width:62px;height:62px} }
+
+
+/* ORDER-001A — both mobile orientations are fully playable. */
+#orientation { display:none !important; pointer-events:none !important; }
+@media (pointer:coarse) and (orientation:portrait) {
+  #hud { padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left)); }
+  .topbar { gap:8px; align-items:stretch; }
+  .mission { min-width:0; width:54%; padding:7px 9px; }
+  .mission span,.entity-label span { font-size:7px; letter-spacing:.18em; }
+  .mission b { font-size:10px; letter-spacing:.045em; line-height:1.15; }
+  .entity-card { width:43%; min-width:0; padding:7px 8px; }
+  .entity-label b { font-size:16px; }
+  .objective { top:max(76px,calc(env(safe-area-inset-top) + 66px)); width:min(88vw,380px); white-space:normal; text-align:center; padding:6px 9px; font-size:8px; line-height:1.25; letter-spacing:.09em; }
+  .special-text { top:42%; font-size:clamp(34px,12vw,58px); width:92vw; text-align:center; }
+  .stick { left:max(16px,calc(env(safe-area-inset-left) + 12px)); bottom:max(20px,calc(env(safe-area-inset-bottom) + 14px)); width:112px; height:112px; }
+  .stick-knob { width:48px; height:48px; margin:-24px; }
+  .look-zone { right:0; top:23%; width:58%; height:47%; }
+  .q-btn { right:max(18px,calc(env(safe-area-inset-right) + 12px)); bottom:max(22px,calc(env(safe-area-inset-bottom) + 16px)); width:88px; height:88px; }
+  .q-btn span { font-size:26px; }
+  .run-btn { right:max(116px,calc(env(safe-area-inset-right) + 110px)); bottom:max(28px,calc(env(safe-area-inset-bottom) + 22px)); width:64px; height:64px; }
+  .action-btn { right:max(24px,calc(env(safe-area-inset-right) + 18px)); bottom:max(124px,calc(env(safe-area-inset-bottom) + 118px)); width:68px; height:68px; }
+}
+@media (pointer:coarse) and (orientation:landscape) { .look-zone { right:0; top:15%; width:54%; height:58%; } }
