@@ -24,25 +24,21 @@ jobs:
       - name: Checkout exact deploy source
         uses: actions/checkout@v4
 
-      - name: Materialize staged ARQ optimization
-        run: |
-          if [ -f .arq-optimize.py ]; then
-            python .arq-optimize.py
-            rm .arq-optimize.py
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add src/game.ts .arq-optimize.py
-            git commit -m 'order-001: enforce render budget'
-            git push origin HEAD:order-001-deploy
-          fi
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install dependencies and materialize lockfile
+        run: |
+          npm install --no-audit --no-fund
+          if ! git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add package-lock.json
+            git commit -m 'order-001: lock dependencies'
+            git push origin HEAD:order-001-deploy
+          fi
 
       - name: TypeScript and lint gate
         run: |
