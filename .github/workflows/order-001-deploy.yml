@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: order-001-cloudflare-first
+  cancel-in-progress: true
+
 jobs:
   deploy-and-verify:
     runs-on: ubuntu-latest
