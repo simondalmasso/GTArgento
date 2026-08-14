@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const remote = process.env.E2E_BASE_URL;
+const remote = (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } }).process?.env?.E2E_BASE_URL;
 
 export default defineConfig({
   testDir: './tests',
