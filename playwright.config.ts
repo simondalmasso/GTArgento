@@ -2,8 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 const remote = (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } }).process?.env?.E2E_BASE_URL;
 const chromiumArgs = [
-  '--use-angle=swiftshader',
-  '--enable-unsafe-swiftshader',
   '--disable-dev-shm-usage',
   '--disable-gpu-watchdog',
 ];
