@@ -264,7 +264,10 @@ function makeMoriaFaceTexture() {
   // face highlights and small diva beauty mark
   g.fillStyle = 'rgba(255,238,224,.28)'; g.beginPath(); g.ellipse(512, 300, 52, 120, 0, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#3b1725'; g.beginPath(); g.arc(700, 735, 8, 0, Math.PI * 2); g.fill();
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping; tex.anisotropy = 2; return tex;
+  const refined=document.createElement('canvas'); refined.width=1024; refined.height=1024; const rg=refined.getContext('2d')!;
+  rg.fillStyle='#d99a8c'; rg.fillRect(0,0,1024,1024);
+  rg.drawImage(c,0,0,1024,1024,143,36,738,936);
+  const tex = new THREE.CanvasTexture(refined); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping; tex.anisotropy = 2; return tex;
 }
 
 function createMoria() {
@@ -503,13 +506,13 @@ function styleMoriaRig(root: THREE.Group) {
   });
 
   // Fitted Barbiecore dress over the rig; deliberately not a bell/skirt placeholder.
-  const dress = new THREE.Mesh(new THREE.CylinderGeometry(0.245, 0.292, 1.04, 20), flat(0xff0787));
-  dress.position.set(0, 0.91, 0); dress.scale.z = 0.72; root.add(dress);
+  const dress = new THREE.Mesh(new THREE.CylinderGeometry(0.238, 0.285, 0.84, 20), flat(0xff0787));
+  dress.position.set(0, 1.00, 0); dress.scale.z = 0.72; root.add(dress);
   const waist = new THREE.Mesh(new THREE.TorusGeometry(0.273, 0.020, 6, 18), flat(0x290013));
   waist.rotation.x = Math.PI / 2; waist.position.y = 1.13; root.add(waist);
 
   // Shaggy hot-pink coat concentrated at shoulders/upper arms so the body still reads.
-  const furGeo = new THREE.CapsuleGeometry(0.044, 0.105, 3, 6);
+  const furGeo = new THREE.ConeGeometry(0.070, 0.22, 6);
   const fur = new THREE.InstancedMesh(furGeo, flat(0xff62b4), 16);
   const fd = new THREE.Object3D();
   const coat = [
@@ -527,9 +530,9 @@ function styleMoriaRig(root: THREE.Group) {
   // True 3D head plus a CURVED front-hemisphere facial shell. The full original
   // painted face maps once across -Z/front, so eyes/nose/lips keep their proportions.
   const headBase = new THREE.Mesh(new THREE.SphereGeometry(0.205, 28, 22), flat(0xdf9d8f));
-  headBase.scale.set(.76,1.20,.82); headBase.position.set(0,.038,-.014); headBone.add(headBase);
+  headBase.scale.set(.70,1.18,.82); headBase.position.set(0,.038,-.014); headBone.add(headBase);
   const faceTex = makeMoriaFaceTexture();
-  const faceShellGeo = new THREE.SphereGeometry(0.209, 34, 22, Math.PI, Math.PI, 0.055, Math.PI - 0.11);
+  const faceShellGeo = new THREE.SphereGeometry(0.210, 34, 22, Math.PI * 7 / 6, Math.PI * 2 / 3, 0.065, Math.PI - 0.13);
   const faceShell = new THREE.Mesh(faceShellGeo, new THREE.MeshBasicMaterial({ map: faceTex, color:0xffffff, toneMapped:false }));
   faceShell.scale.copy(headBase.scale); faceShell.position.copy(headBase.position); headBone.add(faceShell);
 
@@ -542,6 +545,9 @@ function styleMoriaRig(root: THREE.Group) {
 
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218,20,14,0,Math.PI*2,0,Math.PI*.54), flat(0x020204));
   cap.scale.set(.91,.91,.92); cap.position.set(0,.137,.035); headBone.add(cap);
+  const partLine=new THREE.Mesh(new THREE.BoxGeometry(.012,.105,.012),flat(0xdf9d8f)); partLine.position.set(0,.176,-.174); partLine.rotation.x=.18; headBone.add(partLine);
+  const frontLocks=new THREE.InstancedMesh(new THREE.BoxGeometry(.052,.76,.045),flat(0x020204),2); const ld=new THREE.Object3D();
+  [-1,1].forEach((side,i)=>{ld.position.set(side*.176,-.205,-.105);ld.rotation.set(0,side*.06,side*.025);ld.scale.set(1,1,1);ld.updateMatrix();frontLocks.setMatrixAt(i,ld.matrix)}); frontLocks.instanceMatrix.needsUpdate=true; headBone.add(frontLocks);
 
   // Long straight jet-black hair with center part and shoulder-length sheets.
   const hg = new THREE.BoxGeometry(.028,1.22,.046);
