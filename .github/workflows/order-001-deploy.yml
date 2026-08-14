@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: order-001-cloudflare-first
@@ -28,17 +28,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
 
-      - name: Install dependencies and materialize lockfile
-        run: |
-          npm install --no-audit --no-fund
-          if ! git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add package-lock.json
-            git commit -m 'order-001: lock dependencies'
-            git push origin HEAD:order-001-deploy
-          fi
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
 
       - name: TypeScript and lint gate
         run: |
@@ -50,7 +43,7 @@ jobs:
 
       - name: Record source and bundle hashes
         run: |
-          printf 'SOURCE_SHA=%s\n' "$(git rev-parse HEAD)" | tee build-evidence.txt
+          printf 'SOURCE_SHA=%s\n' "$GITHUB_SHA" | tee build-evidence.txt
           printf 'BUILD_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a build-evidence.txt
           find dist -type f -print0 | sort -z | xargs -0 sha256sum | tee dist-sha256.txt
           sha256sum dist-sha256.txt | tee -a build-evidence.txt
@@ -63,9 +56,8 @@ jobs:
 
       - name: Verify canonical production URL
         run: |
-          SOURCE_SHA=$(git rev-parse HEAD)
           for i in 1 2 3 4 5 6; do
-            code=$(curl -L -sS -o production.html -w '%{http_code}' "$E2E_BASE_URL/?deploy_sha=$SOURCE_SHA" || true)
+            code=$(curl -L -sS -o production.html -w '%{http_code}' "$E2E_BASE_URL/?deploy_sha=$GITHUB_SHA" || true)
             echo "attempt=$i http=$code"
             if [ "$code" = "200" ]; then break; fi
             sleep 5
@@ -81,8 +73,7 @@ jobs:
 
       - name: Package lock evidence
         if: always()
-        run: |
-          test -f package-lock.json && sha256sum package-lock.json | tee package-lock.sha256 || true
+        run: sha256sum package-lock.json | tee package-lock.sha256
 
       - name: Upload ORDER-001 evidence
         if: always()
