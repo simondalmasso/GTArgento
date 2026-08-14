@@ -541,8 +541,6 @@ function styleMoriaRig(root: THREE.Group) {
   cap.scale.set(.91,.91,.92); cap.position.set(0,.137,.035); headBone.add(cap);
 
   // Long straight jet-black hair with center part and shoulder-length sheets.
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218,18,12,0,Math.PI*2,0,Math.PI*.55), flat(0x030205));
-  cap.scale.set(.90,.93,.91); cap.position.set(0,.132,.033); headBone.add(cap);
   const hg = new THREE.BoxGeometry(.028,1.22,.046);
   const hair = new THREE.InstancedMesh(hg, flat(0x020204), 15);
   const hd = new THREE.Object3D();
