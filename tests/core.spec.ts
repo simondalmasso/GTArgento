@@ -26,7 +26,8 @@ test('complete mission loop: move, Q, entidad, taxi, win, fail and restart', asy
   expect(Number(qState.qAffected)).toBeGreaterThanOrEqual(1);
   await page.screenshot({ path: testInfo.outputPath('q-special.png') });
 
-  await page.evaluate(() => { window.__QS_TEST__.entity(0); window.__QS_TEST__.teleport(-10, 34); });
+  // Use a separate paparazzi that was outside Q radius, so this verifies the live pursuit/contact mechanic rather than waiting for STAGGER/FLEE recovery.
+  await page.evaluate(() => { window.__QS_TEST__.entity(0); window.__QS_TEST__.teleport(-2, 7.7); });
   await page.waitForTimeout(650);
   const pursued = await state();
   expect(Number(pursued.entity)).toBeGreaterThan(0);
