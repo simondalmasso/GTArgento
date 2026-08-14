@@ -100,4 +100,3 @@ rep(old,new,'poster variation')
 
 p.write_text(s,encoding='utf-8')
 print('ARQ_FINAL_LIKENESS_STREETSCAPE=APPLIED')
-"}
