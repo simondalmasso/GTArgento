@@ -264,7 +264,7 @@ function makeMoriaFaceTexture() {
   // face highlights and small diva beauty mark
   g.fillStyle = 'rgba(255,238,224,.28)'; g.beginPath(); g.ellipse(512, 300, 52, 120, 0, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#3b1725'; g.beginPath(); g.arc(700, 735, 8, 0, Math.PI * 2); g.fill();
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; return tex;
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.RepeatWrapping; tex.offset.x = -0.25; tex.anisotropy = 2; return tex;
 }
 
 function createMoria() {
@@ -318,8 +318,18 @@ function facadePlane(w:number,h:number,x:number,z:number,front:number,tex:THREE.
   const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex,toneMapped:false}));
   m.position.set(x,h/2,z+front*.03); if(front>0) m.rotation.y=Math.PI; return m;
 }
+function facadeSidePlane(d:number,h:number,x:number,z:number,tex:THREE.Texture){
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(d,h),new THREE.MeshBasicMaterial({map:tex,toneMapped:false,side:THREE.DoubleSide}));
+  m.position.set(x,h/2,z); m.rotation.y=Math.PI/2; return m;
+}
+function makeNightSky(){
+  const c=document.createElement('canvas');c.width=32;c.height=512;const g=c.getContext('2d')!;
+  const q=g.createLinearGradient(0,0,0,512);q.addColorStop(0,'#090313');q.addColorStop(.48,'#160b2b');q.addColorStop(.82,'#34203f');q.addColorStop(1,'#7a3a55');g.fillStyle=q;g.fillRect(0,0,32,512);
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
+}
 
 function buildBaires() {
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(165,24,14),new THREE.MeshBasicMaterial({map:makeNightSky(),side:THREE.BackSide,toneMapped:false})); sky.position.y=18; scene.add(sky);
   scene.add(meshBox(150, 0.08, 150, C.road, 0, -0.04, 0));
   scene.add(meshBox(142, 0.05, 19, cheapMat({ color: 0x0e0f16, roughness: 0.98 }), 0, 0.01, 6));
   scene.add(meshBox(19, 0.052, 136, cheapMat({ color: 0x101118, roughness: 0.98 }), -7, 0.012, 0));
@@ -366,6 +376,21 @@ function buildBaires() {
     [27,22.97,34,22,1,makeFacadeTexture('#333047','#8fb7ff','#ffca48','CAFÉ · TEATRO')],
   ] as const;
   facadeSpecs.forEach(([x,z,w,h,f,tex])=>scene.add(facadePlane(w,h,x,z,f,tex)));
+
+  const sideFacades = [
+    [-21.96,38,30,20,makeFacadeTexture('#3a2d43','#ffc970','#ff2697','TEATROS · CORRIENTES')],
+    [9.96,38,30,20,makeFacadeTexture('#29374b','#8fc3ff','#42dcff','LIBROS · CAFÉ')],
+    [-21.96,-29,34,22,makeFacadeTexture('#4b303b','#ffd28b','#ff4f73','PIZZERÍA · BAR')],
+    [9.96,-29,34,22,makeFacadeTexture('#302d45','#9bbcff','#ffc93f','REVISTAS · 24H')],
+  ] as const;
+  sideFacades.forEach(([x,z,d,h,tex])=>scene.add(facadeSidePlane(d,h,x,z,tex)));
+
+  // Side-facing neon/shop blades along the route.
+  const blades=[
+    ['GRAN REX',-21.6,45,'#ff2496'],['ÓPERA',9.6,34,'#50ddff'],['PIZZA',-21.6,27,'#ffd04c'],['LIBROS',9.6,48,'#79b9ff'],
+    ['CAFÉ',-21.6,-18,'#ff9c63'],['KIOSCO',9.6,-38,'#5ee59c']
+  ] as const;
+  blades.forEach(([txt,x,z,a],i)=>{const b=label(txt,4.8,.82,'#100b15','#fff7df',a);b.position.set(x,4.4+(i%2)*1.2,z);b.rotation.y=Math.PI/2;scene.add(b)});
 
   // Warm sodium pools and sidewalk edging evoke Corrientes without expensive real lights.
   const poolGeo=new THREE.CircleGeometry(3.8,24); const pools=new THREE.InstancedMesh(poolGeo,flat(0xf3bd72,.095),10); const pd=new THREE.Object3D();
@@ -427,9 +452,12 @@ function buildBaires() {
   verticalSigns.forEach(([txt, x, y, z, accent]) => {
     const sign = label(txt, 5.8, .82, '#130917', '#fff7e5', accent); sign.position.set(x, y, z); scene.add(sign);
   });
-  const posterTransforms: Array<{ p: THREE.Vector3; s: THREE.Vector3 }> = [];
-  for (let x = -55; x <= 53; x += 12) posterTransforms.push({ p: new THREE.Vector3(x, 2.1, 18.54), s: new THREE.Vector3(1.7, 2.7, .05) });
-  scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1), flat(0x9d145d), posterTransforms));
+  const posterColors=[0x99164f,0x14577a,0x8b4b16];
+  posterColors.forEach((color,ci)=>{
+    const posterTransforms:Array<{p:THREE.Vector3;s:THREE.Vector3}>=[];
+    for(let x=-55+ci*4;x<=53;x+=12) posterTransforms.push({p:new THREE.Vector3(x,2.0,18.54),s:new THREE.Vector3(1.55,2.45,.05)});
+    scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1),flat(color),posterTransforms));
+  });
   const bollards: Array<{ p: THREE.Vector3; s: THREE.Vector3 }> = [];
   for (let x = -55; x <= 55; x += 8) { bollards.push({ p:new THREE.Vector3(x,.32,14.4), s:new THREE.Vector3(.13,.64,.13) }); }
   scene.add(instancedBoxes(new THREE.BoxGeometry(1,1,1), flat(0xe7c8a1), bollards));
@@ -475,13 +503,13 @@ function styleMoriaRig(root: THREE.Group) {
   });
 
   // Fitted Barbiecore dress over the rig; deliberately not a bell/skirt placeholder.
-  const dress = new THREE.Mesh(new THREE.CylinderGeometry(0.265, 0.315, 1.02, 18), flat(0xff0787));
+  const dress = new THREE.Mesh(new THREE.CylinderGeometry(0.245, 0.292, 1.04, 20), flat(0xff0787));
   dress.position.set(0, 0.91, 0); dress.scale.z = 0.72; root.add(dress);
   const waist = new THREE.Mesh(new THREE.TorusGeometry(0.273, 0.020, 6, 18), flat(0x290013));
   waist.rotation.x = Math.PI / 2; waist.position.y = 1.13; root.add(waist);
 
   // Shaggy hot-pink coat concentrated at shoulders/upper arms so the body still reads.
-  const furGeo = new THREE.CapsuleGeometry(0.052, 0.13, 3, 6);
+  const furGeo = new THREE.CapsuleGeometry(0.044, 0.105, 3, 6);
   const fur = new THREE.InstancedMesh(furGeo, flat(0xff62b4), 16);
   const fd = new THREE.Object3D();
   const coat = [
@@ -496,39 +524,21 @@ function styleMoriaRig(root: THREE.Group) {
   const headBone = root.getObjectByName('Head');
   if (!headBone) return;
 
-  // True 3D head: narrow oval/high cheekbone proportions closer to Moria than the stock mannequin.
-  const face = new THREE.Mesh(new THREE.SphereGeometry(0.205, 24, 20), flat(0xdf9d8f));
-  face.scale.set(.76,1.24,.82); face.position.set(0,.038,-.014); headBone.add(face);
+  // True 3D head with an original painted Moria-like UV treatment.
+  const faceTex = makeMoriaFaceTexture();
+  const faceMat = new THREE.MeshBasicMaterial({ map: faceTex, color: 0xffffff, toneMapped:false });
+  const face = new THREE.Mesh(new THREE.SphereGeometry(0.205, 28, 22), faceMat);
+  face.scale.set(.78,1.20,.82); face.position.set(0,.038,-.014); headBone.add(face);
 
-  // Adult almond eyes + smoky stage makeup; all geometry is attached to the animated head.
-  const smoky = new THREE.InstancedMesh(new THREE.SphereGeometry(.046,12,8), flat(0x5f204f), 2);
-  const whites = new THREE.InstancedMesh(new THREE.SphereGeometry(.035,12,8), flat(0xfff3ee), 2);
-  const iris = new THREE.InstancedMesh(new THREE.SphereGeometry(.015,8,6), flat(0x271617), 2);
-  const brows = new THREE.InstancedMesh(new THREE.BoxGeometry(.092,.010,.012), flat(0x29101a), 2);
-  const cheek = new THREE.InstancedMesh(new THREE.SphereGeometry(.046,9,7), flat(0xf1b2a1), 2);
-  const wing = new THREE.InstancedMesh(new THREE.BoxGeometry(.056,.008,.010), flat(0x170913), 2);
-  const d = new THREE.Object3D();
-  [-1,1].forEach((side,i)=>{
-    d.position.set(side*.066,.060,-.164); d.scale.set(1.35,.43,.24); d.rotation.set(0,0,side*.07); d.updateMatrix(); smoky.setMatrixAt(i,d.matrix);
-    d.position.set(side*.066,.057,-.188); d.scale.set(1.30,.36,.24); d.rotation.set(0,0,side*.04); d.updateMatrix(); whites.setMatrixAt(i,d.matrix);
-    d.position.set(side*.066,.056,-.204); d.scale.set(1,.88,.28); d.rotation.set(0,0,0); d.updateMatrix(); iris.setMatrixAt(i,d.matrix);
-    d.position.set(side*.071,.124,-.174); d.scale.set(1,1,1); d.rotation.set(0,0,side*-.28); d.updateMatrix(); brows.setMatrixAt(i,d.matrix);
-    d.position.set(side*.115,-.008,-.135); d.scale.set(1.0,.42,.18); d.rotation.set(0,0,side*.10); d.updateMatrix(); cheek.setMatrixAt(i,d.matrix);
-    d.position.set(side*.118,.065,-.183); d.scale.set(1,1,1); d.rotation.set(0,0,side*-.22); d.updateMatrix(); wing.setMatrixAt(i,d.matrix);
-  });
-  for (const inst of [smoky,whites,iris,brows,cheek,wing]) inst.instanceMatrix.needsUpdate=true;
-  headBone.add(cheek,smoky,whites,iris,wing,brows);
+  // A small real nose bridge/tip adds profile depth; identity does not depend on a 2D card.
+  const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(.014,.062,4,7), flat(0xd28b80));
+  bridge.rotation.x = Math.PI/2; bridge.position.set(0,-.002,-.194); headBone.add(bridge);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(.023,10,7), flat(0xd58d82));
+  tip.scale.set(.84,.68,.72); tip.position.set(0,-.036,-.212); headBone.add(tip);
+  const beauty = new THREE.Mesh(new THREE.SphereGeometry(.0055,6,4), flat(0x251019)); beauty.position.set(.087,-.052,-.201); headBone.add(beauty);
 
-  // Prominent bridge/tip instead of a tiny cartoon cone.
-  const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(.018,.070,4,6), flat(0xd1847c));
-  bridge.rotation.x = Math.PI/2; bridge.position.set(0,.005,-.193); headBone.add(bridge);
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(.027,9,6), flat(0xd58b80)); tip.scale.set(.82,.70,.70); tip.position.set(0,-.035,-.213); headBone.add(tip);
-
-  const upperLip = new THREE.Mesh(new THREE.SphereGeometry(.036,12,8), flat(0xa60058));
-  upperLip.scale.set(1.62,.25,.24); upperLip.position.set(0,-.086,-.194); headBone.add(upperLip);
-  const lowerLip = new THREE.Mesh(new THREE.SphereGeometry(.038,12,8), flat(0xf04492));
-  lowerLip.scale.set(1.70,.29,.24); lowerLip.position.set(0,-.105,-.192); headBone.add(lowerLip);
-  const beauty = new THREE.Mesh(new THREE.SphereGeometry(.0065,6,4), flat(0x241018)); beauty.position.set(.090,-.055,-.199); headBone.add(beauty);
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218,20,14,0,Math.PI*2,0,Math.PI*.54), flat(0x020204));
+  cap.scale.set(.91,.91,.92); cap.position.set(0,.137,.035); headBone.add(cap);
 
   // Long straight jet-black hair with center part and shoulder-length sheets.
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218,18,12,0,Math.PI*2,0,Math.PI*.55), flat(0x030205));
