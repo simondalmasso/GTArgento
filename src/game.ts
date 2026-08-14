@@ -220,54 +220,40 @@ function createBus() {
 }
 
 function makeMoriaFaceTexture() {
-  const c = document.createElement('canvas'); c.width = 1024; c.height = 1024;
-  const g = c.getContext('2d')!;
-  const skin = g.createRadialGradient(512, 470, 90, 512, 500, 560);
-  skin.addColorStop(0, '#edb5a6'); skin.addColorStop(0.58, '#d99a8c'); skin.addColorStop(1, '#b87672');
-  g.fillStyle = skin; g.fillRect(0, 0, 1024, 1024);
-  // sculpted contour / high cheekbones
-  g.fillStyle = 'rgba(150,50,72,.20)';
-  g.beginPath(); g.ellipse(285, 600, 135, 85, -.16, 0, Math.PI * 2); g.fill();
-  g.beginPath(); g.ellipse(739, 600, 135, 85, .16, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(255,205,190,.28)';
-  g.beginPath(); g.ellipse(328, 570, 92, 45, -.18, 0, Math.PI * 2); g.fill();
-  g.beginPath(); g.ellipse(696, 570, 92, 45, .18, 0, Math.PI * 2); g.fill();
-  // dramatic smoky eye makeup
-  for (const cx of [345, 679]) {
-    const sh = g.createRadialGradient(cx, 425, 12, cx, 425, 122);
-    sh.addColorStop(0, 'rgba(38,17,35,.80)'); sh.addColorStop(.55, 'rgba(83,24,68,.48)'); sh.addColorStop(1, 'rgba(119,22,78,0)');
-    g.fillStyle = sh; g.beginPath(); g.ellipse(cx, 430, 135, 78, 0, 0, Math.PI * 2); g.fill();
-  }
-  const drawEye = (cx: number, flip: number) => {
-    g.fillStyle = '#fff4f4'; g.beginPath(); g.moveTo(cx - 84, 448); g.quadraticCurveTo(cx, 390, cx + 87, 449); g.quadraticCurveTo(cx, 486, cx - 84, 448); g.fill();
-    g.fillStyle = '#5b3928'; g.beginPath(); g.arc(cx, 445, 29, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#100c10'; g.beginPath(); g.arc(cx, 445, 15, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(255,255,255,.88)'; g.beginPath(); g.arc(cx - 8, 436, 6, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = '#150b16'; g.lineWidth = 18; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx - 91, 447); g.quadraticCurveTo(cx, 386, cx + 98, 445); g.stroke();
-    g.lineWidth = 9; g.beginPath(); g.moveTo(cx + flip * 72, 428); g.lineTo(cx + flip * 132, 405); g.stroke();
-    g.lineWidth = 5;
-    for (let i = -2; i <= 2; i++) { const x = cx + i * 28; g.beginPath(); g.moveTo(x, 403); g.lineTo(x + i * 3, 374 - Math.abs(i) * 4); g.stroke(); }
+  const c=document.createElement('canvas'); c.width=1024; c.height=1024; const g=c.getContext('2d')!;
+  const skin=g.createRadialGradient(512,430,90,512,500,590); skin.addColorStop(0,'#efb5a5');skin.addColorStop(.58,'#d99a8d');skin.addColorStop(1,'#aa6668');g.fillStyle=skin;g.fillRect(0,0,1024,1024);
+
+  // Mature oval contour / high cheekbones.
+  const side=g.createLinearGradient(0,0,1024,0);side.addColorStop(0,'rgba(71,20,41,.32)');side.addColorStop(.18,'rgba(110,48,60,.08)');side.addColorStop(.5,'rgba(255,226,209,.10)');side.addColorStop(.82,'rgba(110,48,60,.08)');side.addColorStop(1,'rgba(71,20,41,.32)');g.fillStyle=side;g.fillRect(0,0,1024,1024);
+  for(const [cx,rot] of [[330,-.16],[694,.16]] as const){g.fillStyle='rgba(122,38,65,.16)';g.beginPath();g.ellipse(cx,575,118,57,rot,0,Math.PI*2);g.fill();g.fillStyle='rgba(255,211,196,.27)';g.beginPath();g.ellipse(cx,557,78,29,rot,0,Math.PI*2);g.fill();}
+
+  const eye=(cx:number,sideSign:number)=>{
+    const smoke=g.createRadialGradient(cx,405,10,cx,405,105);smoke.addColorStop(0,'rgba(34,13,31,.78)');smoke.addColorStop(.55,'rgba(79,22,66,.44)');smoke.addColorStop(1,'rgba(89,20,69,0)');g.fillStyle=smoke;g.beginPath();g.ellipse(cx,408,113,49,0,0,Math.PI*2);g.fill();
+    g.fillStyle='#fff3ef';g.beginPath();g.moveTo(cx-66,420);g.quadraticCurveTo(cx,384,cx+69,418);g.quadraticCurveTo(cx,444,cx-66,420);g.fill();
+    g.fillStyle='#6a4330';g.beginPath();g.ellipse(cx,417,18,20,0,0,Math.PI*2);g.fill();g.fillStyle='#100b0d';g.beginPath();g.arc(cx,417,10,0,Math.PI*2);g.fill();g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.arc(cx-5,410,4,0,Math.PI*2);g.fill();
+    g.strokeStyle='#160914';g.lineWidth=13;g.lineCap='round';g.beginPath();g.moveTo(cx-70,419);g.quadraticCurveTo(cx,379,cx+75,416);g.stroke();g.lineWidth=7;g.beginPath();g.moveTo(cx+sideSign*57,402);g.lineTo(cx+sideSign*100,386);g.stroke();
+    g.lineWidth=4;for(let i=-2;i<=2;i++){const x=cx+i*22;g.beginPath();g.moveTo(x,388);g.lineTo(x+i*2,369-Math.abs(i)*2);g.stroke();}
   };
-  drawEye(345, -1); drawEye(679, 1);
-  // high arched brows
-  g.strokeStyle = '#3a1825'; g.lineWidth = 24; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(250, 330); g.quadraticCurveTo(345, 274, 438, 325); g.stroke();
-  g.beginPath(); g.moveTo(586, 325); g.quadraticCurveTo(679, 274, 774, 330); g.stroke();
-  // long narrow nose with makeup highlight
-  const ng = g.createLinearGradient(452, 0, 572, 0); ng.addColorStop(0, 'rgba(122,65,67,.28)'); ng.addColorStop(.48, 'rgba(255,221,205,.34)'); ng.addColorStop(1, 'rgba(122,65,67,.28)');
-  g.fillStyle = ng; g.beginPath(); g.moveTo(470, 470); g.quadraticCurveTo(454, 650, 512, 690); g.quadraticCurveTo(570, 650, 554, 470); g.closePath(); g.fill();
-  g.fillStyle = 'rgba(92,45,52,.55)'; g.beginPath(); g.ellipse(480, 676, 18, 9, -.2, 0, Math.PI * 2); g.fill(); g.beginPath(); g.ellipse(544, 676, 18, 9, .2, 0, Math.PI * 2); g.fill();
-  // strong signature fuchsia lips
-  g.fillStyle = '#a90058'; g.beginPath(); g.moveTo(390, 757); g.quadraticCurveTo(458, 708, 512, 742); g.quadraticCurveTo(566, 708, 635, 757); g.quadraticCurveTo(565, 842, 512, 835); g.quadraticCurveTo(455, 842, 390, 757); g.fill();
-  g.fillStyle = '#e9458e'; g.beginPath(); g.moveTo(404, 762); g.quadraticCurveTo(470, 748, 512, 768); g.quadraticCurveTo(555, 748, 620, 762); g.quadraticCurveTo(554, 814, 512, 809); g.quadraticCurveTo(466, 814, 404, 762); g.fill();
-  g.strokeStyle = 'rgba(83,30,44,.34)'; g.lineWidth = 5; g.beginPath(); g.moveTo(414, 760); g.quadraticCurveTo(512, 780, 610, 760); g.stroke();
-  // face highlights and small diva beauty mark
-  g.fillStyle = 'rgba(255,238,224,.28)'; g.beginPath(); g.ellipse(512, 300, 52, 120, 0, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#3b1725'; g.beginPath(); g.arc(700, 735, 8, 0, Math.PI * 2); g.fill();
-  const refined=document.createElement('canvas'); refined.width=1024; refined.height=1024; const rg=refined.getContext('2d')!;
-  rg.fillStyle='#d99a8c'; rg.fillRect(0,0,1024,1024);
-  rg.drawImage(c,0,0,1024,1024,143,36,738,936);
-  const tex = new THREE.CanvasTexture(refined); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping; tex.anisotropy = 2; return tex;
+  eye(348,-1);eye(676,1);
+
+  // High arched dark brows.
+  g.strokeStyle='#34131f';g.lineWidth=19;g.lineCap='round';g.beginPath();g.moveTo(270,326);g.quadraticCurveTo(350,270,435,317);g.stroke();g.beginPath();g.moveTo(589,317);g.quadraticCurveTo(674,270,754,326);g.stroke();
+
+  // Long narrow nose: side shadows, central highlight, defined nostrils.
+  const noseShade=g.createLinearGradient(430,0,594,0);noseShade.addColorStop(0,'rgba(104,43,53,.28)');noseShade.addColorStop(.35,'rgba(151,77,72,.07)');noseShade.addColorStop(.5,'rgba(255,224,207,.32)');noseShade.addColorStop(.65,'rgba(151,77,72,.07)');noseShade.addColorStop(1,'rgba(104,43,53,.28)');g.fillStyle=noseShade;g.beginPath();g.moveTo(464,448);g.quadraticCurveTo(452,620,488,678);g.quadraticCurveTo(512,700,536,678);g.quadraticCurveTo(572,620,560,448);g.closePath();g.fill();
+  g.fillStyle='rgba(75,31,39,.48)';g.beginPath();g.ellipse(481,681,15,7,-.15,0,Math.PI*2);g.fill();g.beginPath();g.ellipse(543,681,15,7,.15,0,Math.PI*2);g.fill();
+
+  // Wide glamorous mouth / pronounced cupid's bow.
+  g.fillStyle='#9d004e';g.beginPath();g.moveTo(365,758);g.quadraticCurveTo(438,706,512,742);g.quadraticCurveTo(586,706,659,758);g.quadraticCurveTo(586,790,512,783);g.quadraticCurveTo(438,790,365,758);g.fill();
+  g.fillStyle='#ef438e';g.beginPath();g.moveTo(378,766);g.quadraticCurveTo(448,748,512,770);g.quadraticCurveTo(576,748,646,766);g.quadraticCurveTo(578,831,512,825);g.quadraticCurveTo(446,831,378,766);g.fill();
+  g.strokeStyle='rgba(68,21,36,.46)';g.lineWidth=5;g.beginPath();g.moveTo(390,764);g.quadraticCurveTo(512,784,634,764);g.stroke();
+
+  // Smile lines, forehead/nose highlight, beauty mark.
+  g.strokeStyle='rgba(116,55,62,.18)';g.lineWidth=7;g.beginPath();g.moveTo(405,660);g.quadraticCurveTo(382,712,397,744);g.stroke();g.beginPath();g.moveTo(619,660);g.quadraticCurveTo(642,712,627,744);g.stroke();
+  g.fillStyle='rgba(255,235,218,.24)';g.beginPath();g.ellipse(512,285,42,94,0,0,Math.PI*2);g.fill();
+  g.fillStyle='#28101b';g.beginPath();g.arc(685,724,7,0,Math.PI*2);g.fill();
+
+  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.wrapS=THREE.ClampToEdgeWrapping;tex.wrapT=THREE.ClampToEdgeWrapping;tex.anisotropy=2;return tex;
 }
 
 function createMoria() {
@@ -530,22 +516,25 @@ function styleMoriaRig(root: THREE.Group) {
   // True 3D head plus a CURVED front-hemisphere facial shell. The full original
   // painted face maps once across -Z/front, so eyes/nose/lips keep their proportions.
   const headBase = new THREE.Mesh(new THREE.SphereGeometry(0.205, 28, 22), flat(0xdf9d8f));
-  headBase.scale.set(.70,1.18,.82); headBase.position.set(0,.038,-.014); headBone.add(headBase);
+  headBase.scale.set(.74,1.16,.82); headBase.position.set(0,.038,-.014); headBone.add(headBase);
   const faceTex = makeMoriaFaceTexture();
   const faceShellGeo = new THREE.SphereGeometry(0.210, 34, 22, Math.PI * 7 / 6, Math.PI * 2 / 3, 0.065, Math.PI - 0.13);
   const faceShell = new THREE.Mesh(faceShellGeo, new THREE.MeshBasicMaterial({ map: faceTex, color:0xffffff, toneMapped:false }));
   faceShell.scale.copy(headBase.scale); faceShell.position.copy(headBase.position); headBone.add(faceShell);
 
-  // A small real nose bridge/tip adds profile depth; identity does not depend on a 2D card.
-  const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(.014,.062,4,7), flat(0xd28b80));
-  bridge.rotation.x = Math.PI/2; bridge.position.set(0,-.002,-.194); headBone.add(bridge);
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(.023,10,7), flat(0xd58d82));
-  tip.scale.set(.84,.68,.72); tip.position.set(0,-.036,-.212); headBone.add(tip);
-  const beauty = new THREE.Mesh(new THREE.SphereGeometry(.0055,6,4), flat(0x251019)); beauty.position.set(.087,-.052,-.201); headBone.add(beauty);
+  // True facial volume: high cheekbones, long bridge, defined tip, lips and tapered chin.
+  const cheekGeo=new THREE.SphereGeometry(.040,10,7); const cheeks=new THREE.InstancedMesh(cheekGeo,flat(0xe8a294),2); const cd=new THREE.Object3D();
+  [-1,1].forEach((side,i)=>{cd.position.set(side*.105,-.010,-.176);cd.scale.set(1.15,.55,.38);cd.updateMatrix();cheeks.setMatrixAt(i,cd.matrix)});cheeks.instanceMatrix.needsUpdate=true;headBone.add(cheeks);
+  const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(.014,.075,4,7), flat(0xd28b80)); bridge.position.set(0,.005,-.202); bridge.scale.z=.72; headBone.add(bridge);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(.027,10,7), flat(0xd58d82)); tip.scale.set(.86,.68,.76); tip.position.set(0,-.047,-.220); headBone.add(tip);
+  const upperLip=new THREE.Mesh(new THREE.SphereGeometry(.032,10,7),flat(0xa60055));upperLip.scale.set(1.62,.25,.23);upperLip.position.set(0,-.098,-.207);headBone.add(upperLip);
+  const lowerLip=new THREE.Mesh(new THREE.SphereGeometry(.034,10,7),flat(0xf04491));lowerLip.scale.set(1.68,.28,.23);lowerLip.position.set(0,-.116,-.205);headBone.add(lowerLip);
+  const chin=new THREE.Mesh(new THREE.SphereGeometry(.034,10,7),flat(0xda9488));chin.scale.set(1.25,.66,.52);chin.position.set(0,-.174,-.164);headBone.add(chin);
+  const beauty = new THREE.Mesh(new THREE.SphereGeometry(.0055,6,4), flat(0x251019)); beauty.position.set(.087,-.052,-.205); headBone.add(beauty);
 
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.218,20,14,0,Math.PI*2,0,Math.PI*.54), flat(0x020204));
   cap.scale.set(.91,.91,.92); cap.position.set(0,.137,.035); headBone.add(cap);
-  const partLine=new THREE.Mesh(new THREE.BoxGeometry(.012,.105,.012),flat(0xdf9d8f)); partLine.position.set(0,.176,-.174); partLine.rotation.x=.18; headBone.add(partLine);
+  const partLine=new THREE.Mesh(new THREE.BoxGeometry(.010,.040,.010),flat(0xdf9d8f)); partLine.position.set(0,.194,-.181); partLine.rotation.x=.18; headBone.add(partLine);
   const frontLocks=new THREE.InstancedMesh(new THREE.BoxGeometry(.052,.76,.045),flat(0x020204),2); const ld=new THREE.Object3D();
   [-1,1].forEach((side,i)=>{ld.position.set(side*.176,-.205,-.105);ld.rotation.set(0,side*.06,side*.025);ld.scale.set(1,1,1);ld.updateMatrix();frontLocks.setMatrixAt(i,ld.matrix)}); frontLocks.instanceMatrix.needsUpdate=true; headBone.add(frontLocks);
 
