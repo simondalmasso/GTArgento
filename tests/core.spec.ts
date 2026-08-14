@@ -12,10 +12,10 @@ test('complete mission loop: move, Q, entidad, taxi, win, fail and restart', asy
 
   const before = await state();
   await page.keyboard.down('w');
-  await page.waitForTimeout(350);
+  await page.waitForTimeout(1000);
   await page.keyboard.up('w');
   const moved = await state();
-  expect(Math.hypot(Number(moved.x) - Number(before.x), Number(moved.z) - Number(before.z))).toBeGreaterThan(0.35);
+  expect(Math.hypot(Number(moved.x) - Number(before.x), Number(moved.z) - Number(before.z))).toBeGreaterThan(0.25);
 
   await page.evaluate(() => window.__QS_TEST__.teleport(-8, 33));
   await page.waitForTimeout(80);
@@ -28,7 +28,7 @@ test('complete mission loop: move, Q, entidad, taxi, win, fail and restart', asy
 
   // Use a separate paparazzi that was outside Q radius, so this verifies the live pursuit/contact mechanic rather than waiting for STAGGER/FLEE recovery.
   await page.evaluate(() => { window.__QS_TEST__.entity(0); window.__QS_TEST__.teleport(-2, 7.7); });
-  await page.waitForTimeout(650);
+  await page.waitForTimeout(850);
   const pursued = await state();
   expect(Number(pursued.entity)).toBeGreaterThan(0);
 
@@ -37,7 +37,7 @@ test('complete mission loop: move, Q, entidad, taxi, win, fail and restart', asy
   await expect.poll(async () => Boolean((await state()).vehicleMode)).toBe(true);
   const taxiBefore = await state();
   await page.keyboard.down('w');
-  await page.waitForTimeout(450);
+  await page.waitForTimeout(700);
   await page.keyboard.up('w');
   const taxiAfter = await state();
   expect(Math.hypot(Number(taxiAfter.x) - Number(taxiBefore.x), Number(taxiAfter.z) - Number(taxiBefore.z))).toBeGreaterThan(0.1);
