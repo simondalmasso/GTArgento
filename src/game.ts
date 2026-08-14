@@ -835,8 +835,8 @@ function updateQuality(dt: number) {
   const fps = 1 / Math.max(0.001, dt); fpsSamples.push(fps); if (fpsSamples.length > 480) fpsSamples.shift(); qualityClock += dt;
   if (qualityClock < 3.5) return; qualityClock = 0;
   const sorted = [...fpsSamples].sort((a, b) => a - b); fpsAvg = fpsSamples.reduce((a, b) => a + b, 0) / Math.max(1, fpsSamples.length); fpsMedian = sorted[Math.floor(sorted.length * 0.5)] ?? fpsAvg; fpsP5 = sorted[Math.floor(sorted.length * 0.05)] ?? fpsAvg;
-  if (fpsAvg < 50 && resolutionScale > 0.32) { resolutionScale = Math.max(0.32, resolutionScale - 0.06); updateRendererSize(); }
-  else if (fpsAvg > 59 && fpsP5 > 47 && resolutionScale < 0.92) { resolutionScale = Math.min(0.92, resolutionScale + 0.04); updateRendererSize(); }
+  if (fpsAvg < 50 && resolutionScale > 0.32) { resolutionScale = Math.max(0.32, resolutionScale - 0.06); refreshViewport(); }
+  else if (fpsAvg > 59 && fpsP5 > 47 && resolutionScale < 0.92) { resolutionScale = Math.min(0.92, resolutionScale + 0.04); refreshViewport(); }
   if (PERF_MODE) perfEl.textContent = `FPS avg ${fpsAvg.toFixed(1)} · med ${fpsMedian.toFixed(1)} · p5 ${fpsP5.toFixed(1)}\nquality ${resolutionScale.toFixed(2)} · DPR ${(Math.min(devicePixelRatio, 1.5) * resolutionScale).toFixed(2)}\ndraw ${renderer.info.render.calls} · tris ${renderer.info.render.triangles}`;
 }
 
