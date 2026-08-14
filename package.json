@@ -1,0 +1,25 @@
+{
+  "name": "quienes-son",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.18.0",
+    "three": "^0.179.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@types/three": "^0.179.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.2",
+    "wrangler": "^4.29.1"
+  }
+}

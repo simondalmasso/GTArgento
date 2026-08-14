@@ -1,0 +1,107 @@
+name: ORDER-001 Cloudflare First Deploy
+
+on:
+  push:
+    branches: [order-001-deploy]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: order-001-cloudflare-first
+  cancel-in-progress: true
+
+jobs:
+  deploy-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      E2E_BASE_URL: https://quienes-son.simondalmasso44.workers.dev
+    steps:
+      - name: Checkout exact deploy source
+        uses: actions/checkout@v4
+
+      - name: Materialize staged ARQ quality repair
+        if: ${{ hashFiles('.arq-final-quality.py') != '' }}
+        run: |
+          python .arq-final-quality.py
+          rm .arq-final-quality.py
+          git config user.name "ORDER-001 ARQ"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "order-001: animated Moria, Baires polish and renderer repair"
+          git push origin HEAD:order-001-deploy
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript and lint gate
+        run: |
+          npm run typecheck
+          npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Record exact source and bundle hashes
+        run: |
+          printf 'SOURCE_SHA=%s\n' "$(git rev-parse HEAD)" | tee build-evidence.txt
+          printf 'BUILD_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a build-evidence.txt
+          printf 'PACKAGE_LOCK_SHA256=%s\n' "$(sha256sum package-lock.json | awk '{print $1}')" | tee -a build-evidence.txt
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum | tee dist-sha256.txt
+          printf 'DIST_MANIFEST_SHA256=%s\n' "$(sha256sum dist-sha256.txt | awk '{print $1}')" | tee -a build-evidence.txt
+
+      - name: Verify Cloudflare authorization
+        run: npx wrangler whoami
+
+      - name: Deploy exact source to required Worker
+        run: npx wrangler deploy 2>&1 | tee deploy.log
+
+      - name: Verify canonical production URL
+        run: |
+          SOURCE_SHA=$(git rev-parse HEAD)
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -L -sS -o production.html -w '%{http_code}' "$E2E_BASE_URL/?deploy_sha=$SOURCE_SHA" || true)
+            echo "attempt=$i http=$code"
+            if [ "$code" = "200" ]; then break; fi
+            sleep 5
+          done
+          test "$code" = "200"
+          grep -q 'QUIÉNES SON' production.html
+
+      - name: Install Playwright Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Production desktop mobile WebKit gameplay and performance E2E
+        run: npx playwright test --project=desktop-chromium --project=mobile-chromium --project=webkit-mobile-smoke
+
+      - name: Append deploy version evidence
+        if: always()
+        run: |
+          if [ -f deploy.log ]; then
+            grep -E 'Current Version ID:|https://quienes-son\.simondalmasso44\.workers\.dev' deploy.log | tee -a build-evidence.txt || true
+          fi
+
+      - name: Upload ORDER-001 final production evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: order-001-final-production-evidence-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            build-evidence.txt
+            dist-sha256.txt
+            deploy.log
+            production.html
+            playwright-report/
+            test-results/

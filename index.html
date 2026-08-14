@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#080510" />
+    <meta name="description" content="QUIÉNES SON — una noche por Corrientes." />
+    <title>QUIÉNES SON — Baires</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game" aria-label="QUIÉNES SON juego 3D"></canvas>
+      <div id="vignette"></div>
+      <div id="flash"></div>
+
+      <section id="intro" class="screen">
+        <div class="city-kicker">BUENOS AIRES · 02:13 AM</div>
+        <h1>¿QUIÉNES<br/><em>SON?</em></h1>
+        <p class="mission-copy">LLEGÁ AL BOLICHE<br/>SIN DARLE ENTIDAD A NADIE.</p>
+        <button id="startBtn" class="primary">SALIR DEL TEATRO</button>
+        <p class="legal">Experiencia paródica original. Sin assets de GTA/Rockstar ni audio de terceros.</p>
+      </section>
+
+      <div id="hud" class="hidden">
+        <div class="topbar">
+          <div class="mission"><span>MISIÓN</span><b>LLEGÁ AL BOLICHE</b></div>
+          <div class="entity-card"><div class="entity-label"><span>ENTIDAD</span><b id="entityValue">0</b></div><div class="meter"><i id="entityFill"></i></div></div>
+        </div>
+        <div id="objective" class="objective">SALÍ POR CORRIENTES · EVITÁ A LOS PAPARAZZI</div>
+        <div id="specialText" class="special-text">¿QUIÉNES SON?</div>
+        <div id="vehicleHint" class="hint hidden">E · SUBIR AL TAXI</div>
+        <div id="perf" class="perf hidden"></div>
+      </div>
+
+      <div id="touch" class="touch hidden">
+        <div id="stick" class="stick"><div id="stickKnob" class="stick-knob"></div></div>
+        <div id="lookZone" class="look-zone"></div>
+        <button id="qBtn" class="touch-btn q-btn"><span>Q</span><small id="qCooldown">¿QUIÉNES SON?</small></button>
+        <button id="runBtn" class="touch-btn run-btn">CORRER</button>
+        <button id="actionBtn" class="touch-btn action-btn hidden">ENTRAR</button>
+      </div>
+
+      <section id="result" class="screen result hidden">
+        <div id="resultKicker" class="city-kicker">MISIÓN</div>
+        <h2 id="resultTitle">MISSION PASSED</h2>
+        <div id="resultScore" class="score">GLAMOUR +500<br/>ENTIDAD +0</div>
+        <button id="restartBtn" class="primary">OTRA VUELTA</button>
+      </section>
+    </div>
+    <script type="module" src="/src/game.ts"></script>
+  </body>
+</html>
