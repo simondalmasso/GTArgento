@@ -40,6 +40,18 @@ jobs:
             git push origin HEAD:order-001-deploy
           fi
 
+      - name: Materialize isolated base preview probe
+        run: |
+          if [ -f .arq-base-preview.py ]; then
+            python .arq-base-preview.py
+            rm .arq-base-preview.py
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add src/game.ts tests/base-preview.spec.ts .arq-base-preview.py
+            git commit -m 'order-001: add isolated CC0 humanoid probe'
+            git push origin HEAD:order-001-deploy
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
