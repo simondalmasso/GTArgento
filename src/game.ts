@@ -264,7 +264,7 @@ function makeMoriaFaceTexture() {
   // face highlights and small diva beauty mark
   g.fillStyle = 'rgba(255,238,224,.28)'; g.beginPath(); g.ellipse(512, 300, 52, 120, 0, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#3b1725'; g.beginPath(); g.arc(700, 735, 8, 0, Math.PI * 2); g.fill();
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.RepeatWrapping; tex.offset.x = -0.25; tex.anisotropy = 2; return tex;
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping; tex.anisotropy = 2; return tex;
 }
 
 function createMoria() {
@@ -319,8 +319,8 @@ function facadePlane(w:number,h:number,x:number,z:number,front:number,tex:THREE.
   m.position.set(x,h/2,z+front*.03); if(front>0) m.rotation.y=Math.PI; return m;
 }
 function facadeSidePlane(d:number,h:number,x:number,z:number,tex:THREE.Texture){
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(d,h),new THREE.MeshBasicMaterial({map:tex,toneMapped:false,side:THREE.DoubleSide}));
-  m.position.set(x,h/2,z); m.rotation.y=Math.PI/2; return m;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(d,h),new THREE.MeshBasicMaterial({map:tex,toneMapped:false,side:THREE.FrontSide}));
+  m.position.set(x,h/2,z); m.rotation.y=x < 0 ? Math.PI/2 : -Math.PI/2; return m;
 }
 function makeNightSky(){
   const c=document.createElement('canvas');c.width=32;c.height=512;const g=c.getContext('2d')!;
@@ -390,7 +390,7 @@ function buildBaires() {
     ['GRAN REX',-21.6,45,'#ff2496'],['ÓPERA',9.6,34,'#50ddff'],['PIZZA',-21.6,27,'#ffd04c'],['LIBROS',9.6,48,'#79b9ff'],
     ['CAFÉ',-21.6,-18,'#ff9c63'],['KIOSCO',9.6,-38,'#5ee59c']
   ] as const;
-  blades.forEach(([txt,x,z,a],i)=>{const b=label(txt,4.8,.82,'#100b15','#fff7df',a);b.position.set(x,4.4+(i%2)*1.2,z);b.rotation.y=Math.PI/2;scene.add(b)});
+  blades.forEach(([txt,x,z,a],i)=>{const b=label(txt,4.8,.82,'#100b15','#fff7df',a);b.position.set(x,4.4+(i%2)*1.2,z);b.rotation.y=x < 0 ? Math.PI/2 : -Math.PI/2;scene.add(b)});
 
   // Warm sodium pools and sidewalk edging evoke Corrientes without expensive real lights.
   const poolGeo=new THREE.CircleGeometry(3.8,24); const pools=new THREE.InstancedMesh(poolGeo,flat(0xf3bd72,.095),10); const pd=new THREE.Object3D();
@@ -524,11 +524,14 @@ function styleMoriaRig(root: THREE.Group) {
   const headBone = root.getObjectByName('Head');
   if (!headBone) return;
 
-  // True 3D head with an original painted Moria-like UV treatment.
+  // True 3D head plus a CURVED front-hemisphere facial shell. The full original
+  // painted face maps once across -Z/front, so eyes/nose/lips keep their proportions.
+  const headBase = new THREE.Mesh(new THREE.SphereGeometry(0.205, 28, 22), flat(0xdf9d8f));
+  headBase.scale.set(.76,1.20,.82); headBase.position.set(0,.038,-.014); headBone.add(headBase);
   const faceTex = makeMoriaFaceTexture();
-  const faceMat = new THREE.MeshBasicMaterial({ map: faceTex, color: 0xffffff, toneMapped:false });
-  const face = new THREE.Mesh(new THREE.SphereGeometry(0.205, 28, 22), faceMat);
-  face.scale.set(.78,1.20,.82); face.position.set(0,.038,-.014); headBone.add(face);
+  const faceShellGeo = new THREE.SphereGeometry(0.209, 34, 22, Math.PI, Math.PI, 0.055, Math.PI - 0.11);
+  const faceShell = new THREE.Mesh(faceShellGeo, new THREE.MeshBasicMaterial({ map: faceTex, color:0xffffff, toneMapped:false }));
+  faceShell.scale.copy(headBase.scale); faceShell.position.copy(headBase.position); headBone.add(faceShell);
 
   // A small real nose bridge/tip adds profile depth; identity does not depend on a 2D card.
   const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(.014,.062,4,7), flat(0xd28b80));
@@ -580,7 +583,7 @@ previewLoader.load('/assets/moria-base.glb', gltf => {
   const size = initial.getSize(new THREE.Vector3());
   const targetHeight = BASE_PREVIEW ? 5.35 : 2.78;
   const scale = targetHeight / Math.max(size.y, 0.001);
-  root.scale.setScalar(scale);
+  if (BASE_PREVIEW) root.scale.setScalar(scale); else root.scale.set(scale * .86, scale, scale * .91);
   root.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
