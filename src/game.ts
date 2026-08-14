@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
 import './style.css';
 
@@ -61,6 +62,7 @@ const resultScore = $('#resultScore');
 
 const params = new URLSearchParams(location.search);
 const PERF_MODE = params.has('perf');
+const BASE_PREVIEW = params.has('base');
 const isCoarse = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 if (PERF_MODE) perfEl.classList.remove('hidden');
 
@@ -370,8 +372,38 @@ function buildBaires() {
   }
 }
 
+const playerPos = new THREE.Vector3(0, 0, 50);
 buildBaires();
 const moria = createMoria(); scene.add(moria);
+let basePreview: THREE.Group | null = null;
+let baseReady = false;
+if (BASE_PREVIEW) {
+  new GLTFLoader().load('/assets/moria-base.glb', gltf => {
+    const root = gltf.scene;
+    const initial = new THREE.Box3().setFromObject(root);
+    const size = initial.getSize(new THREE.Vector3());
+    const targetHeight = 5.35;
+    const scale = targetHeight / Math.max(size.y, 0.001);
+    root.scale.setScalar(scale);
+    root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(root);
+    const center = box.getCenter(new THREE.Vector3());
+    const min = box.min;
+    root.position.set(-center.x, -min.y, -center.z);
+    root.position.add(playerPos);
+    root.traverse(o => {
+      if (o instanceof THREE.Mesh || o instanceof THREE.SkinnedMesh) {
+        o.castShadow = false;
+        o.receiveShadow = true;
+      }
+    });
+    basePreview = root;
+    baseReady = true;
+    moria.visible = false;
+    scene.add(root);
+    console.info('QS_BASE_PREVIEW', JSON.stringify({animations:gltf.animations.map(a=>a.name), size:[size.x,size.y,size.z], nodes:root.children.map(c=>c.name)}));
+  }, undefined, error => console.error('QS_BASE_PREVIEW_LOAD', error));
+}
 const taxi = createTaxi(); taxi.position.set(16, 0, 6); taxi.rotation.y = Math.PI / 2; scene.add(taxi);
 const npcs: NPC[] = [
   createNPC('paparazzi', -10, 34), createNPC('paparazzi', -2, 7), createNPC('paparazzi', 31, -25),
@@ -379,7 +411,6 @@ const npcs: NPC[] = [
   createNPC('neutral', 15, 10),
 ];
 
-const playerPos = new THREE.Vector3(0, 0, 50);
 const destination = new THREE.Vector3(47, 0, -43);
 let started = false;
 let ended = false;
@@ -455,7 +486,7 @@ function worldPos() { return vehicleMode ? taxi.position : playerPos; }
 function resetGame() {
   entity = 0; qTimer = 0; qUses = 0; qAffected = 0; ended = false; resultState = '';
   vehicleMode = false; vehicleSpeed = 0; vehicleHeading = Math.PI / 2; taxi.position.set(16, 0, 6); taxi.rotation.y = vehicleHeading;
-  playerPos.set(0, 0, 50); playerBody.setNextKinematicTranslation({ x: 0, y: 1.2, z: 50 }); moria.visible = true; moria.position.copy(playerPos); moria.rotation.y = 0;
+  playerPos.set(0, 0, 50); playerBody.setNextKinematicTranslation({ x: 0, y: 1.2, z: 50 }); moria.visible = !BASE_PREVIEW; moria.position.copy(playerPos); moria.rotation.y = 0; if (basePreview) { basePreview.position.x = playerPos.x; basePreview.position.z = playerPos.z; basePreview.rotation.y = 0; }
   cameraYaw = 0; cameraPitch = 0.28; cameraDistance = 8.2;
   npcs.forEach((n, i) => { n.root.position.copy(n.home); n.state = 'WANDER'; n.timer = 0.5 + i * 0.1; n.knock.set(0, 0, 0); });
   objective.textContent = 'SALÍ POR CORRIENTES · EVITÁ A LOS PAPARAZZI'; updateHud();
@@ -585,7 +616,7 @@ function frame(now: number) {
   requestAnimationFrame(frame); const rawDt = Math.max(0, (now - lastTime) / 1000); const dt = Math.min(0.033, rawDt); lastTime = now; elapsed += dt;
   if (started && !ended && !document.hidden) { updatePlayer(dt); physics.step(); updateNPCs(dt); updateMission(); }
   updateQ(dt); updateCamera(dt || 0.016); updateQuality(rawDt || 0.016);
-  moria.position.set(playerPos.x, Math.sin(elapsed * 8.5) * (started && !vehicleMode ? 0.025 : 0), playerPos.z);
+  moria.position.set(playerPos.x, Math.sin(elapsed * 8.5) * (started && !vehicleMode ? 0.025 : 0), playerPos.z); if (basePreview) { basePreview.position.x = playerPos.x; basePreview.position.z = playerPos.z; basePreview.rotation.y = playerYaw; basePreview.visible = !vehicleMode; }
   const ring = scene.getObjectByName('DESTINATION_RING'); if (ring) ring.rotation.z = elapsed * 0.42;
   renderer.render(scene, camera);
 }
@@ -593,7 +624,7 @@ requestAnimationFrame(frame);
 
 window.__QS_TEST__ = {
   start: startGame,
-  state: () => ({ started, ended, result: resultState, entity, qTimer, qUses, qAffected, vehicleMode, x: worldPos().x, z: worldPos().z, fpsAvg, fpsMedian, fpsP5, quality: resolutionScale, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }),
+  state: () => ({ started, ended, result: resultState, entity, qTimer, qUses, qAffected, vehicleMode, x: worldPos().x, z: worldPos().z, fpsAvg, fpsMedian, fpsP5, quality: resolutionScale, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, baseReady }),
   teleport: (x, z) => { if (vehicleMode) taxi.position.set(x, 0, z); else { playerPos.set(x, 0, z); moria.position.copy(playerPos); playerBody.setNextKinematicTranslation({ x, y: 1.2, z }); } },
   nearTaxi: () => { vehicleMode = false; moria.visible = true; playerPos.set(taxi.position.x + 2.4, 0, taxi.position.z); moria.position.copy(playerPos); },
   destination: () => { if (vehicleMode) taxi.position.set(destination.x, 0, destination.z); else { playerPos.copy(destination); moria.position.copy(playerPos); } },
