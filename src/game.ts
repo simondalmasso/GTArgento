@@ -79,13 +79,13 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPrefer
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.4;
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = !isCoarse;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 scene.add(new THREE.HemisphereLight(0x9d91c0, 0x221326, 1.8));
 const key = new THREE.DirectionalLight(0xffddec, 2.4);
 key.position.set(-28, 42, 24);
-key.castShadow = true;
+key.castShadow = !isCoarse;
 key.shadow.mapSize.set(768, 768);
 key.shadow.camera.left = -62;
 key.shadow.camera.right = 62;
@@ -199,8 +199,8 @@ function createMoria() {
   const torso = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 14), C.pink); torso.scale.set(0.88, 1.06, 0.7); torso.position.y = 3.18; torso.castShadow = true; g.add(torso);
   const coat = new THREE.Mesh(new THREE.CapsuleGeometry(0.49, 1.02, 5, 12), C.fur); coat.rotation.z = Math.PI / 2; coat.position.set(0, 3.31, 0.05); coat.scale.set(1, 0.83, 0.75); coat.castShadow = true; g.add(coat);
   const furGeo = new THREE.ConeGeometry(0.12, 0.65, 6);
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
     const strand = new THREE.Mesh(furGeo, C.fur);
     strand.position.set(Math.cos(a) * 0.75, 3.2 + Math.sin(a * 2) * 0.13, Math.sin(a) * 0.28);
     strand.rotation.z = Math.cos(a) * 0.58; strand.rotation.x = Math.sin(a) * 0.25; g.add(strand);
@@ -223,8 +223,8 @@ function createMoria() {
   const lips = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 8), lipMat); lips.scale.set(1, 0.25, 0.18); lips.position.set(0, 4.41, -0.48); g.add(lips);
   const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.56, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.58), C.hair); hairCap.position.set(0, 4.86, 0.04); hairCap.scale.set(0.95, 1.05, 0.94); g.add(hairCap);
   const hairGeo = new THREE.CylinderGeometry(0.055, 0.085, 2.5, 6);
-  for (let i = 0; i < 12; i++) {
-    const a = -1.42 + (i / 11) * 2.84;
+  for (let i = 0; i < 6; i++) {
+    const a = -1.42 + (i / 5) * 2.84;
     const strand = new THREE.Mesh(hairGeo, C.hair); strand.position.set(Math.sin(a) * 0.48, 3.83, Math.cos(a) * 0.31 + 0.16); strand.rotation.z = Math.sin(a) * 0.1; g.add(strand);
   }
   for (const sx of [-1, 1]) {
@@ -336,9 +336,9 @@ buildBaires();
 const moria = createMoria(); scene.add(moria);
 const taxi = createTaxi(); taxi.position.set(19, 0, 18); taxi.rotation.y = 0.25; scene.add(taxi);
 const npcs: NPC[] = [
-  createNPC('paparazzi', -10, 34), createNPC('paparazzi', 9, 29), createNPC('paparazzi', -2, 7), createNPC('paparazzi', 31, -25),
+  createNPC('paparazzi', -10, 34), createNPC('paparazzi', -2, 7), createNPC('paparazzi', 31, -25),
   createNPC('fan', -28, 10), createNPC('fan', 8, -22),
-  createNPC('neutral', -46, 3), createNPC('neutral', 15, 10), createNPC('neutral', -4, -34),
+  createNPC('neutral', 15, 10),
 ];
 
 const playerPos = new THREE.Vector3(0, 0, 50);
