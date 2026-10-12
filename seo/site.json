@@ -1,0 +1,9 @@
+{
+  "project": "GTArgento",
+  "locale": "es-AR",
+  "title": "GTArgento | Juego 3D de sátira argentina",
+  "description": "Jugá una aventura 3D original de humor argentino: una Buenos Aires nocturna, cuatro personajes y misiones distintas. Para móvil y PC. Parodia no oficial.",
+  "origin": "https://gtargento.simondalmasso44.workers.dev/",
+  "indexable": false,
+  "ogImage": "/og/gtargento.webp"
+}
