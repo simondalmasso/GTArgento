@@ -63,6 +63,15 @@ jobs:
           test "$ok" = "1"
           curl -fsS "$SITE_ORIGIN/robots.txt" -o robots.txt
           grep -q 'Disallow: /' robots.txt
+          script_path="$(grep -oE 'src="/assets/[^"]+\\.js"' staging.html | head -n1 | cut -d'"' -f2)"
+          test -n "$script_path"
+          script_code="$(curl -sS -o staging.js -w '%{http_code}' "$SITE_ORIGIN$script_path" || true)"
+          test "$script_code" = "200"
+          test "$(wc -c < staging.js)" -gt 10000
+          favicon_code="$(curl -sS -o favicon.svg -w '%{http_code}' "$SITE_ORIGIN/favicon.svg" || true)"
+          test "$favicon_code" = "200"
+          sitemap_code="$(curl -sS -o sitemap-probe.html -w '%{http_code}' "$SITE_ORIGIN/sitemap.xml" || true)"
+          test "$sitemap_code" = "404"
       - name: Upload staging evidence
         if: always()
         uses: actions/upload-artifact@v4
