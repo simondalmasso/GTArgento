@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "node",
+      "vite/client"
+    ],
+    "noEmit": true
+  },
+  "include": [
+    "src/main.tsx",
+    "src/game/**/*.ts",
+    "src/game/**/*.tsx",
+    "vite.cloudflare.config.ts",
+    "src/missions/**/*.ts"
+  ]
+}
