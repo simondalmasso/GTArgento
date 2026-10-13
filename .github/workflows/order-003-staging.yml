@@ -1,0 +1,79 @@
+name: ORDER-003 Cloudflare staging deploy
+
+on:
+  push:
+    branches: [order-003-v1]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gtargento-order003-staging
+  cancel-in-progress: true
+
+jobs:
+  verify-and-stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      SITE_ORIGIN: https://gtargento-staging.simondalmasso44.workers.dev
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Unit mission contract
+        run: npm run test:missions
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Generate SEO metadata for staging
+        run: node scripts/generate-seo.mjs --out=dist --origin="$SITE_ORIGIN"
+      - name: Verify SEO metadata and noindex
+        run: node scripts/check-seo.mjs --out=dist --origin="$SITE_ORIGIN"
+      - name: Record source and build hashes
+        run: |
+          printf 'SOURCE_SHA=%s\n' "$GITHUB_SHA" | tee build-evidence.txt
+          printf 'BUILD_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a build-evidence.txt
+          sha256sum package-lock.json | awk '{print "PACKAGE_LOCK_SHA256="$1}' | tee -a build-evidence.txt
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum | tee dist-sha256.txt
+          sha256sum dist-sha256.txt | awk '{print "DIST_MANIFEST_SHA256="$1}' | tee -a build-evidence.txt
+      - name: Verify Cloudflare credentials
+        run: npx --yes wrangler@4.37.0 whoami
+      - name: Deploy only to staging Worker
+        run: npx --yes wrangler@4.37.0 deploy --config wrangler.jsonc 2>&1 | tee deploy.log
+      - name: Verify public staging HTML and noindex
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in 1 2 3 4 5 6; do
+            code="$(curl -sS -o staging.html -w '%{http_code}' "$SITE_ORIGIN/?deploy_sha=$GITHUB_SHA" || true)"
+            echo "attempt=$i http=$code"
+            if [ "$code" = "200" ] && grep -q 'GTArgento' staging.html; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          curl -fsS "$SITE_ORIGIN/robots.txt" -o robots.txt
+          grep -q 'Disallow: /' robots.txt
+      - name: Upload staging evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gtargento-order003-staging-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            build-evidence.txt
+            dist-sha256.txt
+            deploy.log
+            staging.html
+            robots.txt
+            dist/
