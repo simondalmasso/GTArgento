@@ -63,7 +63,7 @@ jobs:
           test "$ok" = "1"
           curl -fsS "$SITE_ORIGIN/robots.txt" -o robots.txt
           grep -q 'Disallow: /' robots.txt
-          script_path="$(grep -oE 'src="/assets/[^"]+\\.js"' staging.html | head -n1 | cut -d'"' -f2)"
+          script_path="$(grep -oE 'src="/assets/[^"]+\.js"' staging.html | head -n1 | cut -d'"' -f2)"
           test -n "$script_path"
           script_code="$(curl -sS -o staging.js -w '%{http_code}' "$SITE_ORIGIN$script_path" || true)"
           test "$script_code" = "200"
