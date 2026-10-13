@@ -50,6 +50,12 @@ jobs:
         run: npx --yes wrangler@4.37.0 whoami
       - name: Deploy only to staging Worker
         run: npx --yes wrangler@4.37.0 deploy --config wrangler.jsonc 2>&1 | tee deploy.log
+      - name: Install pinned Playwright runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+      - name: Install Chromium for WebGL E2E
+        run: npx playwright install --with-deps chromium
+      - name: E2E against the deployed staging Worker
+        run: npx playwright test --config=playwright.config.ts
       - name: Verify public staging HTML and noindex
         run: |
           set -euo pipefail
@@ -85,4 +91,6 @@ jobs:
             deploy.log
             staging.html
             robots.txt
+            test-results/
+            playwright-report/
             dist/

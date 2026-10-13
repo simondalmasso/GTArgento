@@ -15,6 +15,9 @@ test("mission map projects onto the recovered street and round-trips",()=>{
    assert.ok(Math.abs(back[1]-p[1])<1e-9);
  }
 });
+test("roster uses canonical display names",()=>{
+ assert.deepEqual(Object.values(ROSTER).map(x=>x.displayName),["Moria Casán","Facundo Moyano","Franco Colapinto","Tini Stoessel"]);
+});
 test("every protagonist has a distinct briefing and ability",()=>{
  const values=Object.values(ROSTER);
  assert.ok(values.every(x=>x.briefing.length>20&&x.abilityName.length>1));

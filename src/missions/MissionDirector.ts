@@ -55,7 +55,7 @@ export const ROSTER: Readonly<Record<PlayerId,MissionSpec>> = {
     failText:"LES DISTE ENTIDAD",pressureType:"ENTIDAD"
   },
   facundo:{
-    playerId:"facundo",displayName:"Facundo Moyando",title:"LA CORRIDA DEL SIGLO",
+    playerId:"facundo",displayName:"Facundo Moyano",title:"LA CORRIDA DEL SIGLO",
     briefing:"Persecución arcade ficticia: cruzá los checkpoints antes de que se agote el tiempo.",
     abilityName:"PIQUE",
     spawn:[-56,12],timeLimitSeconds:80,pressureType:"FLASHS",
