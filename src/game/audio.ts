@@ -14,13 +14,13 @@ export class GameAudio {
       this.master.gain.value = 0.7;
       this.master.connect(this.ctx.destination);
     }
+    if (this.buffers.size === 0) {
+      for (const name of ["step", "camera", "special", "win", "fail", "ui", "engine"]) {
+        this.buffers.set(name, this.synthesize(name));
+      }
+    }
     if (this.ctx.state === "suspended") void this.ctx.resume();
     if (!this.amb) this.startAmbience();
-  }
-
-  async load() {
-    this.unlock();
-    for (const name of ["step", "camera", "special", "win", "fail", "ui", "engine"]) this.buffers.set(name, this.synthesize(name));
   }
 
   private synthesize(name: string): AudioBuffer {

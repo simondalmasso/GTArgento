@@ -17,7 +17,7 @@ export class City {
   private build(tex: TexBag) {
     const asphalt = new THREE.MeshStandardMaterial({
       map: tex.asphalt ?? null,
-      color: tex.asphalt ? 0x8899aa : 0x1a1a1e,
+      color: tex.asphalt ? 0xa5adba : 0x25252d,
       roughness: 0.28,
       metalness: 0.18,
     });
@@ -27,7 +27,7 @@ export class City {
     }
     const walkM = new THREE.MeshStandardMaterial({
       map: tex.sidewalk ?? null,
-      color: 0x8a8680,
+      color: 0x98928d,
       roughness: 0.55,
       metalness: 0.05,
     });
@@ -111,12 +111,12 @@ export class City {
   private building(w: number, h: number, d: number, front?: THREE.Texture, sideT?: THREE.Texture, hero = false) {
     const g = new THREE.Group();
     const mats = [
+      new THREE.MeshStandardMaterial({ map: sideT ?? null, color: 0x37323b, roughness: 0.7 }),
       new THREE.MeshStandardMaterial({ map: sideT ?? null, color: 0x2a2622, roughness: 0.7 }),
-      new THREE.MeshStandardMaterial({ map: sideT ?? null, color: 0x2a2622, roughness: 0.7 }),
-      new THREE.MeshStandardMaterial({ color: 0x1a1816, roughness: 0.85 }),
+      new THREE.MeshStandardMaterial({ color: 0x29252e, roughness: 0.85 }),
       new THREE.MeshStandardMaterial({ color: 0x1a1816, roughness: 0.85 }),
       new THREE.MeshStandardMaterial({ map: front ?? null, color: front ? 0xffffff : 0x3a342e, roughness: 0.55 }),
-      new THREE.MeshStandardMaterial({ map: sideT ?? null, color: 0x26221e, roughness: 0.7 }),
+      new THREE.MeshStandardMaterial({ map: sideT ?? null, color: 0x332e38, roughness: 0.7 }),
     ];
     const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats);
     body.position.y = h / 2;
@@ -179,7 +179,7 @@ export class City {
     );
     lamp.position.set(0, 4.35, 0.7);
     g.add(lamp);
-    const light = new THREE.PointLight(0xffc07a, 2.1, 18, 1.7);
+    const light = new THREE.PointLight(0xffc07a, 3.1, 23, 1.7);
     light.position.copy(lamp.position);
     g.add(light);
     return g;

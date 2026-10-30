@@ -44,8 +44,8 @@ export class StylizedAvatar {
     const skin = material(0xc99577, 0.72);
     const darkHair = material(id === "tini" ? 0x3a211e : 0x17141c, 0.82);
     const shirt = material(id === "franco" ? 0x147dba : id === "tini" ? 0xf52d9b : 0xe8dfd5, 0.48);
-    const jacket = material(id === "franco" ? 0x1468a8 : id === "tini" ? 0xc31b78 : 0x20283b, 0.42);
-    const trousers = material(id === "tini" ? 0x28243b : id === "franco" ? 0x172f4a : 0x20202a, 0.66);
+    const jacket = material(id === "franco" ? 0x197ebd : id === "tini" ? 0xc91f83 : 0x3b465a, 0.42);
+    const trousers = material(id === "tini" ? 0x342744 : id === "franco" ? 0x233f5c : 0x30313d, 0.66);
     const shoes = material(id === "franco" ? 0xe8edf1 : 0x111016, 0.52);
     const metal = material(id === "franco" ? 0xe7edf4 : 0xd8c4a3, 0.28, 0.55);
 

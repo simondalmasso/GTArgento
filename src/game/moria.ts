@@ -11,9 +11,9 @@ function lathe(pts: [number, number][], seg = 28) {
 function sequinMat(tex?: THREE.Texture) {
   const m = new THREE.MeshPhysicalMaterial({
     map: tex ?? null,
-    color: tex ? 0xff3355 : 0xe01040,
-    roughness: 0.22,
-    metalness: 0.42,
+    color: tex ? 0xff5a8a : 0xf01852,
+    roughness: 0.3,
+    metalness: 0.32,
     sheen: 1,
     sheenColor: new THREE.Color(0xff78c8),
     sheenRoughness: 0.18,
@@ -25,9 +25,9 @@ function sequinMat(tex?: THREE.Texture) {
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <opaque_fragment>",
       `
-      vec2 gs = floor(vMapUv * 92.0);
+      vec2 gs = floor(vMapUv * 64.0);
       float h = fract(sin(dot(gs, vec2(12.9898,78.233))) * 43758.5453);
-      float spark = step(0.86, h) * pow(max(outgoingLight.r, 0.12), 1.4);
+      float spark = step(0.94, h) * pow(max(outgoingLight.r, 0.12), 1.4);
       outgoingLight += spark * vec3(1.0, 0.72, 0.88);
       #include <opaque_fragment>
       `,

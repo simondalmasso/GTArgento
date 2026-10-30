@@ -95,13 +95,13 @@ export function GameApp() {
                 {Array.from({ length: 5 }).map((_, i) => <i key={i} className={"star " + (i < stars ? "on" : "")} />)}
               </div>
             </div>
-            <div className="grid size-16 place-items-center rounded-xl border-2 border-pink bg-night-2 font-display text-2xl text-pink shadow-hud sm:size-20" aria-label={"Avatar 3D de " + hud.characterName}>
+            <div className="grid size-16 place-items-center rounded-xl border-2 border-pink bg-night-2 font-display text-2xl text-pink shadow-hud sm:size-20" aria-label={"Protagonista " + hud.characterName}>
               {hud.characterName.split(" ").map((part) => part[0]).join("").slice(0, 2)}
             </div>
           </div>
 
           {!hud.isMobile && (
-            <div className="absolute right-5 top-1/2 hidden -translate-y-1/2 font-hud text-xs leading-6 text-cream/80 lg:block">
+            <div data-testid="controls-help" className="absolute right-4 top-1/2 hidden w-32 -translate-y-1/2 text-right font-hud text-xs leading-5 text-cream/80 sm:right-5 lg:block">
               <div><b>W A S D</b> Mover</div>
               <div>Mouse Cámara</div>
               <div><b>E</b> Interactuar</div>

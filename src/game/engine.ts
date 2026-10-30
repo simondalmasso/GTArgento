@@ -15,19 +15,6 @@ import { MissionDirector, LANDMARKS, ROSTER, type LandmarkId, type PlayerId } fr
 import { missionToWorld, worldToMission } from "./world-map";
 import { StylizedAvatar } from "./characters";
 
-export type ControlsProbe = {
-  getYaw: () => number;
-  getSpeed: () => number;
-  setSteer?: (v: number) => void;
-  setKeys?: (codes: string[]) => void;
-};
-
-declare global {
-  interface Window {
-    __controlsTest?: ControlsProbe;
-  }
-}
-
 type Npc = {
   g: THREE.Group;
   x: number;
@@ -70,7 +57,6 @@ export class QuienesSonGame {
   mobile = false;
   hudT = 0;
   stepT = 0;
-  injectedSteer: number | null = null;
   private raf = 0;
   private lastW = 0;
   private lastH = 0;
@@ -87,12 +73,12 @@ export class QuienesSonGame {
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMappingExposure = 1.28;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.input = new Input(canvas.parentElement ?? canvas);
     this.scene.background = new THREE.Color(0x070814);
-    this.scene.fog = new THREE.Fog(0x070814, 38, 160);
+    this.scene.fog = new THREE.Fog(0x070814, 50, 190);
   }
 
   async init() {
@@ -110,15 +96,15 @@ export class QuienesSonGame {
       this.scene.add(avatar.root);
     }
 
-    const hemi = new THREE.HemisphereLight(0x4a64a8, 0x1a120c, 0.55);
+    const hemi = new THREE.HemisphereLight(0x657ab4, 0x2a201b, 0.85);
     this.scene.add(hemi);
-    const moon = new THREE.DirectionalLight(0xc4d0ff, 0.35);
+    const moon = new THREE.DirectionalLight(0xc4d0ff, 0.5);
     moon.position.set(-20, 40, 10);
     moon.castShadow = true;
     moon.shadow.mapSize.set(1024, 1024);
     moon.shadow.camera.far = 80;
     this.scene.add(moon);
-    const key = new THREE.SpotLight(0xffc07a, 18, 40, 0.5, 0.4);
+    const key = new THREE.SpotLight(0xffc07a, 20, 44, 0.5, 0.4);
     key.position.set(6, 7, 8);
     this.scene.add(key);
 
@@ -143,8 +129,6 @@ export class QuienesSonGame {
     this.composer.addPass(new OutputPass());
 
     this.selectPlayer("moria");
-    this.wireProbe();
-    await this.audio.load();
     useHud.getState().patch({ loaded: true, loadMsg: "" });
     this.clock.connect(document);
     this.clock.reset();
@@ -225,7 +209,7 @@ export class QuienesSonGame {
 
   private placeMoria() {
     this.activeAvatar.root.position.set(this.px, 0, this.pz);
-    this.activeAvatar.root.rotation.y = this.yaw;
+    this.activeAvatar.root.rotation.y = this.yaw + Math.PI;
   }
 
   private loop = () => {
@@ -406,11 +390,8 @@ export class QuienesSonGame {
 
   private drive(dt: number, a: ReturnType<Input["sample"]>) {
     let steer = 0;
-    if (this.injectedSteer != null) steer = this.injectedSteer;
-    else {
-      if (a.moveX < -0.1) steer += 1;
-      if (a.moveX > 0.1) steer -= 1;
-    }
+    if (a.moveX < -0.1) steer += 1;
+    if (a.moveX > 0.1) steer -= 1;
     const throttle = a.moveY;
     this.taxiSpeed += throttle * 14 * dt;
     this.taxiSpeed *= 1 - 1.6 * dt;
@@ -576,7 +557,7 @@ export class QuienesSonGame {
     }
     const lightM = new THREE.MeshStandardMaterial({ color: 0xffe9aa, emissive: 0xffd27a, emissiveIntensity: 1.5 });
     const hl = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.12, 0.08), lightM);
-    hl.position.set(0.5, 0.55, 2.08);
+    hl.position.set(0.5, 0.55, -2.08);
     const hr = hl.clone();
     hr.position.x = -0.5;
     g.add(hl, hr);
@@ -688,17 +669,6 @@ export class QuienesSonGame {
       playerZ: this.pz,
       playerYaw: this.yaw,
     });
-  }
-
-  private wireProbe() {
-    window.__controlsTest = {
-      getYaw: () => (this.inTaxi ? this.taxiYaw : this.yaw),
-      getSpeed: () => (this.inTaxi ? this.taxiSpeed : this.activeAvatar.speed),
-      setSteer: (v) => {
-        this.injectedSteer = v;
-      },
-      setKeys: (codes) => this.input.setKeys(codes),
-    };
   }
 
   resize() {

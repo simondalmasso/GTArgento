@@ -35,7 +35,7 @@ export const LANDMARKS: Readonly<Record<LandmarkId, Point>> = {
   T: [-70, 12], K: [-47, 12], X: [-10, 0], V: [-30, -5],
   M: [0, -29], A: [28, 12], S: [30, -13], N: [70, 12],
   E: [70, -10], O: [82, 0], K_PLUS: [43, 12],
-  A_TOKEN: [24, 12], S_TOKEN: [42, -12],
+  A_TOKEN: [36, 12], S_TOKEN: [42, -12],
   F_CAR: [-2, -22], F1: [-10, -6], F2: [18, -5], F3: [45, -5],
 };
 const step=(id:string,kind:ObjectiveKind,targetId:LandmarkId,requires:string[]=[],
