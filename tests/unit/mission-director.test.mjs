@@ -84,6 +84,12 @@ test("Franco requires car throughout and all four driving checkpoints",()=>{
  m.tick(0.016,f(LANDMARKS.E,true));
  assert.equal(m.phase,"WON");
 });
+test("Tini's first collectible is ahead of spawn and outside the camera near field",()=>{
+ const [sx,sz]=ROSTER.tini.spawn;
+ const [tx,tz]=LANDMARKS.A_TOKEN;
+ assert.ok(tx>sx,"first collectible must be ahead along Corrientes");
+ assert.ok(Math.hypot(tx-sx,tz-sz)>=7,"first collectible must not obscure the third-person camera");
+});
 test("Tini requires all 3 in-world pickups via interactions",()=>{
  const m=start("tini");
  m.tick(0.016,f(LANDMARKS.E));
