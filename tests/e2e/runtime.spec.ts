@@ -41,15 +41,20 @@ for (const p of protagonists) {
   });
 }
 
-test("WebGL material shaders compile without errors", async ({ page }) => {
+test("WebGL materials compile and audio waits for a user gesture", async ({ page }) => {
   const shaderErrors: string[] = [];
+  const autoplayWarnings: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error" && /THREE\.WebGLProgram|Shader Error|shader is not compiled/i.test(message.text())) {
       shaderErrors.push(message.text());
     }
+    if (message.type() === "warning" && /AudioContext was not allowed to start/i.test(message.text())) {
+      autoplayWarnings.push(message.text());
+    }
   });
   await waitForGame(page);
   expect(shaderErrors).toEqual([]);
+  expect(autoplayWarnings).toEqual([]);
 });
 
 test("portrait to landscape to portrait does not reload or lose the menu", async ({ page }, testInfo) => {
