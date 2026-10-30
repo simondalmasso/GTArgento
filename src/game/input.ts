@@ -112,6 +112,16 @@ export class Input {
   }
 
   private onPtr(e: PointerEvent) {
+    // UI controls must keep their own pointer/click sequence. Capturing a
+    // button's pointer on the game surface suppresses its React click handler.
+    const target = e.target;
+    if (target instanceof Element && target.closest("button, a, input, textarea, select, [role='button'], [data-ui-control]")) {
+      if (e.type === "pointerup" || e.type === "pointercancel") {
+        if (e.pointerId === this.lookPtr) this.lookPtr = null;
+        if (e.pointerId === this.joyPtr) this.joyPtr = null;
+      }
+      return;
+    }
     const r = this.el.getBoundingClientRect();
     const x = e.clientX - r.left;
     const left = x < r.width * 0.42;

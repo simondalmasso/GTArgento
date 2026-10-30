@@ -25,7 +25,7 @@ function sequinMat(tex?: THREE.Texture) {
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <opaque_fragment>",
       `
-      vec2 gs = floor(vUv * 92.0);
+      vec2 gs = floor(vMapUv * 92.0);
       float h = fract(sin(dot(gs, vec2(12.9898,78.233))) * 43758.5453);
       float spark = step(0.86, h) * pow(max(outgoingLight.r, 0.12), 1.4);
       outgoingLight += spark * vec3(1.0, 0.72, 0.88);
