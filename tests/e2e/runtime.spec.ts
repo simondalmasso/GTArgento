@@ -4,7 +4,7 @@ const protagonists = [
   { id: "moria", button: /Moria Casán/, briefing: /De Corrientes al boliche/, title: "¿QUIÉNES SON?", objective: "Llegá al boliche" },
   { id: "facundo", button: /Facundo Moyano/, briefing: /Persecución arcade ficticia/, title: "LA CORRIDA DEL SIGLO", objective: "Alcanzá el kiosco" },
   { id: "franco", button: /Franco Colapinto/, briefing: /set inspirado en Madrid/, title: "MADRID EXPRESS", objective: "Subite al auto" },
-  { id: "tini", button: /Tini Stoessel/, briefing: /tres activos ficticios/, title: "REGLAS DEL SHOW", objective: "Recuperá el contrato" }
+  { id: "tini", button: /Tini Stoessel/, briefing: /Recuperá tres activos ficticios/, title: "REGLAS DEL SHOW", objective: "Recuperá el contrato" }
 ];
 
 async function waitForGame(page) {
@@ -25,19 +25,32 @@ test("menu boots with four selectable protagonists and a WebGL canvas", async ({
 });
 
 for (const p of protagonists) {
-  test("starts " + p.id + " mission with the matching HUD", async ({ page }, testInfo) => {
+  test("selects and starts " + p.id + " mission with the matching HUD", async ({ page }, testInfo) => {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     await waitForGame(page);
     await page.getByRole("button", { name: p.button }).click();
     await expect(page.getByText(p.briefing)).toBeVisible();
     await page.getByRole("button", { name: /JUGAR/ }).click();
-    await expect(page.getByText(p.title, { exact: true })).toBeVisible();
-    await expect(page.getByText(p.objective, { exact: true }).first()).toBeVisible();
+    const hud = page.locator(".hud-panel");
+    await expect(hud.getByText(p.title, { exact: true })).toBeVisible();
+    await expect(hud.getByText(p.objective, { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /REINTENTAR/ })).toHaveCount(0);
     await page.screenshot({ path: testInfo.outputPath(p.id + "-gameplay.png"), fullPage: true });
     expect(pageErrors).toEqual([]);
   });
 }
+
+test("WebGL material shaders compile without errors", async ({ page }) => {
+  const shaderErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && /THREE\.WebGLProgram|Shader Error|shader is not compiled/i.test(message.text())) {
+      shaderErrors.push(message.text());
+    }
+  });
+  await waitForGame(page);
+  expect(shaderErrors).toEqual([]);
+});
 
 test("portrait to landscape to portrait does not reload or lose the menu", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
